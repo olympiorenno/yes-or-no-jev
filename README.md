@@ -2,11 +2,28 @@
 
 **Sim ou Não** — experimental bilingual app powered by Jev.
 
+**Public hosted app:** choose Portuguese or English and connect your own TypeSafe API key. Queries use your own TypeSafe credits.
+
 Aplicativo experimental de perguntas livres com respostas **Sim**, **Não** ou **Inconclusivo**, usando o Jev da TypeSafe AI.
 
-[Versão hospedada — acesso privado](https://sim-ou-nao-olympio.olympio224224.chatgpt.site)
+[Usar o app — acesso público](https://sim-ou-nao-olympio.olympio224224.chatgpt.site)
 
 > **Experimento:** use apenas dados fictícios ou públicos. Não insira informações sensíveis nem anexe documentos confidenciais, seus ou de terceiros. Perguntas, contexto e texto dos PDFs são enviados à TypeSafe. As respostas podem conter erros.
+
+## Usar a versão pública
+
+1. [Abra o app](https://sim-ou-nao-olympio.olympio224224.chatgpt.site), sem precisar instalar.
+2. Escolha português ou inglês.
+3. Clique em **Conectar Jev** e insira sua própria chave do [painel da TypeSafe](https://console.typesafe.ai/keys).
+4. Digite a pergunta e, se desejar, acrescente contexto ou um PDF.
+
+**Cada visitante usa os créditos da própria conta TypeSafe.** O responsável pelo site não fornece uma chave compartilhada. Sem conectar uma chave válida, é possível abrir a interface, mas não obter respostas do Jev.
+
+As consultas deste app não chamam modelos nem consomem tokens da API da OpenAI. A hospedagem utiliza recursos do Sites e está sujeita aos limites do plano do responsável pelo site; consulte a [documentação de hospedagem](https://learn.chatgpt.com/docs/sites).
+
+A chave fica apenas na memória da aba e é encaminhada à TypeSafe pelo servidor do app. Não deve ser incluída no código, em commits ou em arquivos publicados. Ao recarregar a página, conecte novamente. O app não cria histórico persistente de perguntas ou documentos.
+
+A troca de idioma muda a interface e a busca na Wikipédia. Perguntas e PDFs não são traduzidos automaticamente.
 
 ## Recursos
 
@@ -26,11 +43,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Abra o endereço local informado no terminal. No app, clique em **Conectar Jev** e insira sua chave do [painel da TypeSafe](https://console.typesafe.ai/keys). As consultas usam os créditos dessa conta.
-
-A chave fica apenas na memória da aba e é encaminhada à TypeSafe pelo servidor do app. Não deve ser incluída no código, em commits ou em arquivos publicados. Ao recarregar a página, conecte novamente. O app não cria histórico persistente de perguntas ou documentos.
-
-A troca de idioma muda a interface e a busca na Wikipédia. Perguntas e PDFs não são traduzidos automaticamente.
+Abra o endereço local informado no terminal e siga os mesmos passos de conexão descritos em **Usar a versão pública**.
 
 ## Verificação e compilação
 
@@ -63,4 +76,4 @@ A pasta `portable/` e `scripts/build-portable.mjs` preservam um protótipo anter
 
 Confira o texto extraído dos PDFs, especialmente tabelas, múltiplas colunas e páginas digitalizadas. Documentos sem texto selecionável precisam passar por OCR antes do uso.
 
-O site hospedado continua administrado pelo Sites. Esta cópia do código no GitHub não cria publicação nem sincronização automática com ele. A configuração de acesso privado da hospedagem não deve ser presumida em outros ambientes.
+O site é hospedado e administrado pelo Sites. O repositório no GitHub contém o código-fonte e não atualiza automaticamente a versão online: alterações no código exigem uma nova publicação no Sites. A visibilidade do repositório e o acesso ao site são configurações independentes.
