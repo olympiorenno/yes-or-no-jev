@@ -1,0 +1,1 @@
+ALTER TABLE `demo_claims` ADD `attempts` integer DEFAULT 1 NOT NULL;

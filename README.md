@@ -2,7 +2,7 @@
 
 **Sim ou Não** — experimental bilingual app powered by Jev.
 
-**Public hosted app:** choose Portuguese or English. When the owner enables the demo, sign in with ChatGPT for one sponsored attempt. Connect your own TypeSafe API key to continue using your own credits.
+**Public hosted app:** choose Portuguese or English. When the owner enables the demo, sign in with ChatGPT for up to three sponsored attempts. An introductory notice explains the limit and the app shows your remaining allowance. Connect your own TypeSafe API key to continue using your own credits.
 
 Aplicativo experimental de perguntas livres com respostas **Sim**, **Não** ou **Inconclusivo**, usando o Jev da TypeSafe AI.
 
@@ -14,7 +14,7 @@ Aplicativo experimental de perguntas livres com respostas **Sim**, **Não** ou *
 
 1. [Abra o app](https://sim-ou-nao-olympio.olympio224224.chatgpt.site), sem precisar instalar.
 2. Escolha português ou inglês.
-3. Se a demonstração estiver disponível, clique em **Entrar com ChatGPT** para liberar uma tentativa por conta. Ou clique em **Usar minha chave** e insira sua própria chave do [painel da TypeSafe](https://console.typesafe.ai/keys); essa opção não exige login no ChatGPT.
+3. Leia o aviso **Antes de começar**. Se a demonstração estiver disponível, clique em **Entrar com ChatGPT** para acessar até três tentativas por conta. Ou clique em **Usar minha chave** e insira sua própria chave do [painel da TypeSafe](https://console.typesafe.ai/keys); essa opção não exige login no ChatGPT.
 4. Digite a pergunta e, se desejar, acrescente contexto ou um PDF.
 
 **A demonstração usa os créditos TypeSafe do responsável pelo site. Consultas com chave própria usam os créditos TypeSafe do visitante.** A chave do responsável fica em um segredo do servidor, sem ser entregue ao navegador. A demonstração continua dependendo da API Jev.
@@ -34,7 +34,7 @@ A troca de idioma muda a interface e a busca na Wikipédia. Perguntas e PDFs nã
 - Percentuais estimados de sim e não. A classificação auxiliar sobre a base da resposta não bloqueia esses percentuais.
 - Cancelamento de consultas e cópia da resposta.
 - Contador público e persistente de consultas concluídas, sem identificar visitantes.
-- Demonstração opcional: uma tentativa por conta do ChatGPT, com limite total no servidor e continuidade por chave própria.
+- Demonstração opcional: até três tentativas por conta do ChatGPT, com aviso inicial, saldo disponível na tela, limite total no servidor e continuidade por chave própria.
 
 ## Configurar a demonstração no Sites
 
@@ -47,11 +47,13 @@ O código está preparado, mas a demonstração fica desativada até o responsá
 
 Após salvar, publique novamente a versão salva para aplicar as configurações. Não envie a chave pelo chat, não use prefixos de variável pública e não a coloque no GitHub. `.env.example` contém somente os nomes e valores não sensíveis.
 
-O teto inicial é de **100 tentativas no site inteiro, durante toda a vida do banco**, sem renovação diária. Uma conta pode utilizar apenas uma delas; recarregar, limpar cookies, trocar de dispositivo ou fazer chamadas simultâneas não libera outra. Mais de uma conta pode pertencer à mesma pessoa, portanto esse limite é por conta, não por pessoa. O teto limita tentativas, não um valor monetário fixo. Para desativar a demonstração, configure o limite como `0` ou remova a chave e publique novamente. Aumentar o teto libera vagas para novas contas, sem renovar tentativas já usadas.
+O teto inicial é de **100 tentativas no site inteiro, durante toda a vida do banco**, sem renovação diária. Cada conta pode utilizar até **três** delas; recarregar, limpar cookies, trocar de dispositivo ou fazer chamadas simultâneas não reinicia esse saldo. Mais de uma conta pode pertencer à mesma pessoa, portanto esse limite é por conta, não por pessoa. O teto limita tentativas, não um valor monetário fixo. Para desativar a demonstração, configure o limite como `0` ou remova a chave e publique novamente. Aumentar o teto global não renova tentativas já usadas.
+
+Quem já utilizou a demonstração da versão anterior mantém uma tentativa consumida e passa a ter outras duas. A migração preserva esse histórico e o total global. O aviso inicial aparece ao abrir o app, antes de enviar consultas, e explica o limite, a necessidade de chave própria depois e o cuidado com informações sensíveis. Fechar o aviso não consome uma tentativa; ele reaparece ao recarregar. O saldo mostrado considera também a disponibilidade global no momento da verificação.
 
 A tentativa é reservada atomicamente **antes** de chamar a TypeSafe. Erro do provedor, timeout, cancelamento após envio ou resultado inconclusivo podem consumir a tentativa. Não há repetição automática de uma chamada potencialmente cobrada. Requisições rejeitadas localmente antes da reserva não consomem a tentativa. Se o banco falhar, nenhuma nova demonstração é autorizada; consultas com chave própria continuam disponíveis.
 
-O banco guarda um hash do identificador da conta do ChatGPT na tabela `demo_claims`, exclusivamente para aplicar esse limite. É um identificador pseudônimo; não são armazenados nome, e-mail, IP, perguntas, documentos ou chaves nessa tabela. O login é tratado pelo Sites. A chave própria tem prioridade e uma chave inválida nunca faz o app recorrer silenciosamente à conta do responsável.
+O banco guarda um hash do identificador da conta do ChatGPT e o número de tentativas utilizadas na tabela `demo_claims`, exclusivamente para aplicar esse limite. É um identificador pseudônimo; não são armazenados nome, e-mail, IP, perguntas, documentos ou chaves nessa tabela. O login é tratado pelo Sites. A chave própria tem prioridade e uma chave inválida nunca faz o app recorrer silenciosamente à conta do responsável.
 
 Essa autenticação depende dos cabeçalhos confiáveis injetados pelo Sites. Ao hospedar em outro provedor, mantenha a demonstração desativada até implementar e verificar autenticação no servidor; não confie em cabeçalhos de identidade enviados diretamente pelo cliente.
 
@@ -72,6 +74,7 @@ pnpm install --frozen-lockfile
 pnpm build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_luxuriant_alex_power.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_freezing_ozymandias.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_lonely_blob.sql
 pnpm dev
 ```
 

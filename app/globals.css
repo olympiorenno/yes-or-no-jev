@@ -113,6 +113,14 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .demo-actions button { background: white; font-size: 13px; }
 .demo-signin { display: inline-flex; align-items: center; min-height: 36px; padding: 8px 13px; border-radius: 8px; background: #2d5438; color: white; font-size: 13px; font-weight: 600; }
 .demo-signin:focus-visible { outline: 3px solid #557d5e; outline-offset: 3px; }
+.demo-offer .demo-balance { font-weight: 700; }
+.demo-notice-dialog { max-height: 90dvh; overflow-y: auto; }
+.demo-notice-dialog [data-slot=dialog-description] { font-size: 16px; line-height: 1.6; margin-top: 12px; }
+.demo-notice-warning { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 10px; background: #fcf7e8; color: #665123; }
+.demo-notice-warning svg { flex-shrink: 0; margin-top: 2px; }
+.demo-notice-warning p { margin: 0; font-size: 14px; line-height: 1.6; }
+.demo-notice-note { font-size: 14px; line-height: 1.6; color: #59655f; }
+.demo-notice-start { min-height: 44px; background: #2d5438; color: white; }
 .question-panel { background: #fff; padding: 30px; border: 1px solid #dfe6e1; border-radius: 20px; box-shadow: 0 3px 7px #12352103; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .panel-title label { font-weight: 600; font-size: 17px; }
