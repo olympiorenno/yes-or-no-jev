@@ -190,6 +190,13 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .result-actions { display: flex; justify-content: space-between; align-items: center; gap: 9px; margin-top: 24px; }
 .result-actions button { display: flex; align-items: center; gap: 7px; background: none; border: 0; color: #c7ddba; font-size: 13px; padding: 8px 0; }
 .result-actions > span { color: #82a28a; font-size: 11px; }
+.usage-counter { display: flex; align-items: center; gap: 12px; margin-top: 22px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; color: #365b47; background: #ffffff; }
+.usage-counter > svg { flex-shrink: 0; }
+.usage-counter-copy { min-width: 0; flex: 1; }
+.usage-counter-copy p { margin: 0; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.usage-counter-copy strong { color: #234c42; font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.usage-counter-copy > span { display: block; font-size: 13px; line-height: 1.6; color: #66786e; margin-top: 2px; }
+.usage-refresh { flex-shrink: 0; min-width: 40px; min-height: 40px; padding: 10px; color: #365b47; }
 .page-footer { display: flex; justify-content: space-between; gap: 16px; color: #78867d; font-size: 12px; padding: 20px 4px 0; }
 .page-footer a { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; flex-shrink: 0; }
 .error-message { display: flex; align-items: flex-start; gap: 8px; color: #994332; background: #fff4ee; border: 1px solid #f2d6c9; border-radius: 9px; font-size: 14px; padding: 12px; margin: 0 0 16px; }

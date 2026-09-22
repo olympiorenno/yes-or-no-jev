@@ -1,0 +1,43 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "30e3d24e-209c-41da-9605-5858619b9653",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "usage_totals": {
+      "name": "usage_totals",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "completed_queries": {
+          "name": "completed_queries",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

@@ -2,7 +2,7 @@ const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Cont
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 function sameOrigin(request: Request) { const origin = request.headers.get("origin"); return !origin || origin === new URL(request.url).origin; }
 
-export async function handleJev(request: Request) {
+export async function handleJev(request: Request, onCompleted?: (response: unknown) => Promise<void>) {
   if (!sameOrigin(request)) return json({ code: "ORIGIN_REJECTED" }, 403);
   const authorization = `Bearer ${request.headers.get("x-typesafe-key") || ""}`;
   if (!/^Bearer [^\s]{1,512}$/.test(authorization)) return json({ code: "INVALID_KEY" }, 401);
@@ -21,8 +21,14 @@ export async function handleJev(request: Request) {
     const upstream = await fetch("https://api.typesafe.ai/v1/systemone", { method: "POST", headers: { Authorization: authorization, "Content-Type": "application/json" }, body: raw, signal: timeout, redirect: "manual" });
     if (upstream.status >= 300 && upstream.status < 400) return json({ code: "UPSTREAM_REDIRECT" }, 502);
     if (!upstream.ok) return json({ code: "TYPESAFE_ERROR", upstream_status: upstream.status }, upstream.status);
-    try { return json(await upstream.json()); }
+    let data: unknown;
+    try { data = await upstream.json(); }
     catch { return json({ code: "UPSTREAM_INVALID_RESPONSE" }, 502); }
+    if (onCompleted) {
+      try { await onCompleted(data); }
+      catch { console.error("usage_counter_write_failed"); }
+    }
+    return json(data);
   } catch (error) {
     const code = timeout.aborted ? "UPSTREAM_TIMEOUT" : "UPSTREAM_CONNECTION_ERROR";
     // Deliberately exclude keys, question text and raw upstream messages.

@@ -33,6 +33,15 @@ A troca de idioma muda a interface e a busca na Wikipédia. Perguntas e PDFs nã
 - Busca opcional na Wikipédia no idioma selecionado; o documento e o contexto adicional não entram nessa busca.
 - Percentuais estimados de sim e não. A classificação auxiliar sobre a base da resposta não bloqueia esses percentuais.
 - Cancelamento de consultas e cópia da resposta.
+- Contador público e persistente de consultas concluídas, sem identificar visitantes.
+
+## Contador de consultas
+
+O contador público mostra o total de consultas com uma resposta válida do Jev, incluindo resultados inconclusivos. Começa em zero na ativação; não recupera usos anteriores e não conta visitas à página, chaves inválidas, erros da TypeSafe ou respostas malformadas.
+
+O total é compartilhado entre visitantes e persiste no banco D1. A interface o consulta ao abrir a página, ao voltar à aba, após uma consulta concluída ou ao pressionar **Atualizar contador**. O banco guarda somente uma linha com o total, sem perguntas, respostas, PDFs, chaves, endereços IP ou identificadores de visitantes.
+
+A soma ocorre no servidor após o retorno do Jev, com atualização atômica. Recarregar a página não aumenta o total. Se o armazenamento falhar, a resposta continua disponível, mas a consulta pode não entrar na contagem. Uma consulta que já terminou no servidor pode ser contada mesmo que a aba seja fechada antes de exibir o resultado.
 
 ## Executar no computador
 
@@ -40,8 +49,12 @@ Requisitos: Node.js 22.13.0 ou superior e pnpm 11.25.0, conforme `package.json`.
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm build
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_luxuriant_alex_power.sql
 pnpm dev
 ```
+
+Aplique a migração acima uma única vez por banco local novo. O ambiente de desenvolvimento usa D1 local; a publicação no Sites provisiona o banco da hospedagem e aplica as migrações separadamente. Preserve os arquivos de `drizzle/` e a configuração `"d1": "DB"` em `.openai/hosting.json`. Sem o banco, o contador aparece indisponível, mas as consultas ao Jev continuam funcionando.
 
 Abra o endereço local informado no terminal e siga os mesmos passos de conexão descritos em **Usar a versão pública**.
 
@@ -50,6 +63,7 @@ Abra o endereço local informado no terminal e siga os mesmos passos de conexão
 ```sh
 node scripts/verify-core.mjs
 node scripts/verify-worker.mjs
+node scripts/verify-usage.mjs
 pnpm exec tsc --noEmit --incremental false
 pnpm build
 pnpm start
@@ -64,6 +78,8 @@ Os testes usam respostas simuladas para verificar o aplicativo; não medem a pre
 - `lib/api-handlers.ts`: encaminhamento para a TypeSafe e busca na Wikipédia.
 - `lib/pdf.ts`: extração de texto do PDF no navegador.
 - `lib/i18n.ts`: textos em português e inglês.
+- `components/usage-counter.tsx`, `lib/usage.ts` e `app/api/usage/route.ts`: contador público.
+- `db/schema.ts` e `drizzle/`: esquema e migrações do total agregado.
 - `scripts/verify-*.mjs`: verificações do comportamento do app.
 
 React, TypeScript, Vinext/Vite, Cloudflare Workers e PDF.js compõem a aplicação. Dependências e recursos gerados durante instalação e compilação não fazem parte do repositório.

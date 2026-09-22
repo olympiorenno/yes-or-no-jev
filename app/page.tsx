@@ -12,6 +12,7 @@ import { evaluateQuestion, type Evaluation } from "@/lib/jev";
 import { AppError, examples, localeFor, message, messages, type Language, type MessageKey } from "@/lib/i18n";
 import { contextLength, MAX_CONTEXT_CHARS, validateContext, type PdfContext } from "@/lib/context";
 import { readPdf } from "@/lib/pdf";
+import { UsageCounter } from "@/components/usage-counter";
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>("pt");
@@ -35,6 +36,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<MessageKey | null>(null);
   const [result, setResult] = useState<Evaluation | null>(null);
+  const [usageRefresh, setUsageRefresh] = useState(0);
   const [error, setError] = useState<AppError | null>(null);
   const [copied, setCopied] = useState(false);
   const [submittedQuestion, setSubmittedQuestion] = useState("");
@@ -100,7 +102,7 @@ export default function Home() {
     setBusy(true); setError(null); setResult(null); setCopied(false); setSubmittedQuestion(trimmed); setSubmittedPdf(pdf?.name || "");
     try {
       const answer = await evaluateQuestion({ question: trimmed, context: context.trim(), pdf, language, apiKey: key, useReferences: search, signal: controller.signal, onPhase: setPhase });
-      setResult(answer); setKeyUsed(true);
+      setResult(answer); setKeyUsed(true); setUsageRefresh(value => value + 1);
       requestAnimationFrame(() => resultHeading.current?.focus({ preventScroll: true }));
       return answer;
     } catch (err) {
@@ -217,6 +219,7 @@ export default function Home() {
           <div className="answer-footer"><ShieldCheck size={17} /><span>{t.estimateNote}</span></div>
         </section>
       </div>
+      <UsageCounter language={language} refreshToken={usageRefresh} />
       <footer className="page-footer"><span>{t.footer}</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer">{t.about}<ArrowUpRight size={13} /></a></footer>
     </main>
     <Dialog open={keyOpen} onOpenChange={open => { setKeyOpen(open); if (!open) setKeyDraft(""); }}>
