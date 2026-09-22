@@ -13,6 +13,7 @@ import { AppError, examples, localeFor, message, messages, type Language, type M
 import { contextLength, MAX_CONTEXT_CHARS, validateContext, type PdfContext } from "@/lib/context";
 import { readPdf } from "@/lib/pdf";
 import { UsageCounter } from "@/components/usage-counter";
+import { DemoOffer, useDemoStatus } from "@/components/demo-offer";
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>("pt");
@@ -37,6 +38,8 @@ export default function Home() {
   const [phase, setPhase] = useState<MessageKey | null>(null);
   const [result, setResult] = useState<Evaluation | null>(null);
   const [usageRefresh, setUsageRefresh] = useState(0);
+  const [demoRefresh, setDemoRefresh] = useState(0);
+  const demo = useDemoStatus(demoRefresh);
   const [error, setError] = useState<AppError | null>(null);
   const [copied, setCopied] = useState(false);
   const [submittedQuestion, setSubmittedQuestion] = useState("");
@@ -96,24 +99,31 @@ export default function Home() {
     if (pdfActive.current) { setError(new AppError("pdfWait")); return; }
     if (pdfError) { setError(pdfError); return; }
     try { validateContext(context, pdf); } catch (err) { setError(err as AppError); return; }
-    if (!key) { setKeyOpen(true); return; }
+    if (!key && demo.state !== "available") {
+      const statusMessages = { loading: "demoLoading", signin: "demoSignIn", disabled: "demoDisabled", used: "demoUsed", limit: "demoLimit", unavailable: "demoUnavailable" } as const;
+      setError(new AppError(statusMessages[demo.state]));
+      if (demo.state !== "signin" && demo.state !== "loading") setKeyOpen(true);
+      return;
+    }
+    const usingDemo = !key;
     inFlight.current = true;
     const controller = new AbortController(); active.current = controller;
     setBusy(true); setError(null); setResult(null); setCopied(false); setSubmittedQuestion(trimmed); setSubmittedPdf(pdf?.name || "");
     try {
       const answer = await evaluateQuestion({ question: trimmed, context: context.trim(), pdf, language, apiKey: key, useReferences: search, signal: controller.signal, onPhase: setPhase });
-      setResult(answer); setKeyUsed(true); setUsageRefresh(value => value + 1);
+      setResult(answer); setKeyUsed(!usingDemo); setUsageRefresh(value => value + 1);
       requestAnimationFrame(() => resultHeading.current?.focus({ preventScroll: true }));
       return answer;
     } catch (err) {
-      const failure = controller.signal.aborted ? new AppError("cancelled") : err instanceof AppError ? err : new AppError("genericError");
+      let failure = controller.signal.aborted ? new AppError("cancelled") : err instanceof AppError ? err : new AppError("genericError");
+      if (usingDemo && !failure.key.startsWith("demo")) failure = new AppError("demoFailed");
       setError(failure);
       if (failure.key === "invalidKey") { setKeyUsed(false); setKeyOpen(true); }
-    } finally { inFlight.current = false; setBusy(false); setPhase(null); active.current = null; }
+    } finally { inFlight.current = false; setBusy(false); setPhase(null); active.current = null; if (usingDemo) setDemoRefresh(value => value + 1); }
   }
 
   const askRef = useRef(ask); askRef.current = ask;
-  const stateRef = useRef({ busy, key, language }); stateRef.current = { busy, key, language };
+  const stateRef = useRef({ busy, key, language, demoState: demo.state }); stateRef.current = { busy, key, language, demoState: demo.state };
   useEffect(() => {
     type Registry = { registerTool(tool: object, options: { signal: AbortSignal }): void | Promise<void> };
     const registry = (document as Document & { modelContext?: Registry }).modelContext;
@@ -121,13 +131,13 @@ export default function Home() {
     const lifecycle = new AbortController();
     try { void Promise.resolve(registry.registerTool({
       name: "ask_yes_no_question", title: "Ask Jev / Perguntar ao Jev",
-      description: "Queries Jev using the current language, context and attached PDF. Uses credits from the connected TypeSafe account. Add the key through the interface, never as a tool argument.",
+      description: "Queries Jev using the current language, context and attached PDF. Uses the connected TypeSafe account’s credits, or the signed-in visitor’s single sponsored demo attempt when available. Add a personal key through the interface, never as a tool argument.",
       inputSchema: { type: "object", properties: { question: { type: "string", minLength: 5, maxLength: 1500 } }, required: ["question"], additionalProperties: false },
       annotations: { readOnlyHint: false, untrustedContentHint: true },
       async execute(input: unknown) {
         const lang = stateRef.current.language;
         if (!input || typeof input !== "object" || !("question" in input) || typeof input.question !== "string" || Object.keys(input).some(k => k !== "question") || input.question.trim().length < 5 || input.question.length > 1500) throw new Error(message(lang, "invalidToolQuestion"));
-        if (!stateRef.current.key) throw new Error(message(lang, "needKey"));
+        if (!stateRef.current.key && stateRef.current.demoState !== "available") throw new Error(message(lang, "needKey"));
         if (stateRef.current.busy) throw new Error(message(lang, "inFlight"));
         setQuestion(input.question);
         const answer = await askRef.current(input.question);
@@ -164,6 +174,7 @@ export default function Home() {
         <TriangleAlert size={22} aria-hidden="true" />
         <div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div>
       </aside>
+      {!key && <DemoOffer language={language} state={demo.state} signInPath={demo.signInPath} busy={busy} onConnect={() => { setKeyDraft(""); setKeyOpen(true); }} />}
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
@@ -194,8 +205,7 @@ export default function Home() {
             <div className="search-option"><div><Globe2 size={19} /><label htmlFor="references">{t.search}</label></div><Switch id="references" checked={search} onCheckedChange={setSearch} disabled={busy} aria-label={t.search} /></div>
             <p className="search-note">{t.searchNote}</p>
             {error && <div className="error-message" role="alert"><CircleHelp size={18} /><span>{message(language, error.key, error.values)}</span></div>}
-            <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
-            {!key && <p className="connection-note"><KeyRound size={14} />{t.connecting}</p>}
+            <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{!key && demo.state === "available" ? t.demoAsk : t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
           </form>
           <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
         </section>

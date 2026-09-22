@@ -2,10 +2,10 @@ const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Cont
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 function sameOrigin(request: Request) { const origin = request.headers.get("origin"); return !origin || origin === new URL(request.url).origin; }
 
-export async function handleJev(request: Request, onCompleted?: (response: unknown) => Promise<void>) {
+export async function handleJev(request: Request, onCompleted?: (response: unknown) => Promise<void>, resolveServerKey?: () => Promise<string | Response>) {
   if (!sameOrigin(request)) return json({ code: "ORIGIN_REJECTED" }, 403);
-  const authorization = `Bearer ${request.headers.get("x-typesafe-key") || ""}`;
-  if (!/^Bearer [^\s]{1,512}$/.test(authorization)) return json({ code: "INVALID_KEY" }, 401);
+  let apiKey = request.headers.get("x-typesafe-key") || "";
+  if (!resolveServerKey && !/^[^\s]{1,512}$/.test(apiKey)) return json({ code: "INVALID_KEY" }, 401);
   if (Number(request.headers.get("content-length") || 0) > 240000) return json({ code: "REQUEST_TOO_LARGE" }, 413);
   let raw: string;
   try {
@@ -14,13 +14,27 @@ export async function handleJev(request: Request, onCompleted?: (response: unkno
     const payload = JSON.parse(raw);
     if (payload.model !== "jev-latest" || !payload.state || !payload.questions || Object.keys(payload.questions).length > 8) return json({ code: "INVALID_REQUEST" }, 400);
   } catch { return json({ code: "INVALID_REQUEST" }, 400); }
+  if (resolveServerKey) {
+    try {
+      const resolved = await resolveServerKey();
+      if (resolved instanceof Response) return resolved;
+      if (!/^[^\s]{1,512}$/.test(resolved)) return json({ code: "DEMO_UNAVAILABLE" }, 503);
+      apiKey = resolved;
+    } catch {
+      console.error("demo_authorization_failed");
+      return json({ code: "DEMO_UNAVAILABLE" }, 503);
+    }
+  }
+  const authorization = `Bearer ${apiKey}`;
   const timeout = AbortSignal.timeout(32000);
   try {
     // This Worker runtime supports follow/manual, not redirect: error.
     // Never forward the user's credential to a redirected destination.
     const upstream = await fetch("https://api.typesafe.ai/v1/systemone", { method: "POST", headers: { Authorization: authorization, "Content-Type": "application/json" }, body: raw, signal: timeout, redirect: "manual" });
     if (upstream.status >= 300 && upstream.status < 400) return json({ code: "UPSTREAM_REDIRECT" }, 502);
-    if (!upstream.ok) return json({ code: "TYPESAFE_ERROR", upstream_status: upstream.status }, upstream.status);
+    if (!upstream.ok) return resolveServerKey
+      ? json({ code: "DEMO_PROVIDER_ERROR" }, 503)
+      : json({ code: "TYPESAFE_ERROR", upstream_status: upstream.status }, upstream.status);
     let data: unknown;
     try { data = await upstream.json(); }
     catch { return json({ code: "UPSTREAM_INVALID_RESPONSE" }, 502); }

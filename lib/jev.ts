@@ -85,10 +85,19 @@ export async function evaluateQuestion(options: { question: string; context: str
   options.onPhase?.("querying");
   const timeout = signalWithTimeout(options.signal, 35000);
   try {
-    const response = await fetch("/api/jev", { method: "POST", headers: { "Content-Type": "application/json", "X-TypeSafe-Key": options.apiKey }, body: JSON.stringify(buildRequest(options.question, options.context, references, language, options.pdf)), signal: timeout.signal, cache: "no-store", credentials: "same-origin" });
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (options.apiKey) headers["X-TypeSafe-Key"] = options.apiKey;
+    else headers["X-Jev-Demo"] = "1";
+    const response = await fetch("/api/jev", { method: "POST", headers, body: JSON.stringify(buildRequest(options.question, options.context, references, language, options.pdf)), signal: timeout.signal, cache: "no-store", credentials: "same-origin" });
     let failure: { code?: string; upstream_status?: number } = {};
     if (!response.ok) { try { const details = await response.json(); if (details && typeof details === "object") failure = details as typeof failure; } catch { /* Fall back to the HTTP status without exposing provider content. */ } }
     if (failure.code === "ORIGIN_REJECTED") throw new AppError("originRejected");
+    if (failure.code === "DEMO_DISABLED") throw new AppError("demoDisabled");
+    if (failure.code === "DEMO_SIGN_IN_REQUIRED") throw new AppError("demoSignIn");
+    if (failure.code === "DEMO_ALREADY_USED") throw new AppError("demoUsed");
+    if (failure.code === "DEMO_LIMIT_REACHED") throw new AppError("demoLimit");
+    if (failure.code === "DEMO_UNAVAILABLE") throw new AppError("demoUnavailable");
+    if (failure.code === "DEMO_PROVIDER_ERROR") throw new AppError("demoFailed");
     if (failure.code === "UPSTREAM_REDIRECT") throw new AppError("redirect");
     if (failure.code === "UPSTREAM_TIMEOUT" || response.status === 504) throw new AppError("timeout");
     if (failure.code === "UPSTREAM_CONNECTION_ERROR") throw new AppError("connection");

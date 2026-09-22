@@ -52,6 +52,19 @@ try {
   globalThis.fetch = async (url, init) => { requests.push({url, init}); return new Response(JSON.stringify(fixture(.93)), {status:200, headers:{'Content-Type':'application/json'}}); };
   const answer = await evaluateQuestion({question:'O Sol é uma estrela?', context:'', apiKey:'test-only', useReferences:false, signal:new AbortController().signal});
   check('authenticated request and displayed yes', () => { assert.equal(answer.label, 'Sim'); assert.equal(requests.length,1); assert.equal(requests[0].url,'/api/jev'); assert.equal(requests[0].init.headers['X-TypeSafe-Key'],'test-only'); assert.ok(!requests[0].init.body.includes('test-only')); });
+  requests = [];
+  await evaluateQuestion({question:'O Sol é uma estrela?', context:'', apiKey:'', useReferences:false, signal:new AbortController().signal});
+  check('a demo request uses same-origin credentials and contains no API key', () => {
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].init.credentials, 'same-origin');
+    assert.equal(requests[0].init.headers['X-TypeSafe-Key'], undefined);
+    assert.equal(requests[0].init.headers['X-Jev-Demo'], '1');
+  });
+  for (const [code, key] of [['DEMO_DISABLED','demoDisabled'], ['DEMO_SIGN_IN_REQUIRED','demoSignIn'], ['DEMO_ALREADY_USED','demoUsed'], ['DEMO_LIMIT_REACHED','demoLimit'], ['DEMO_UNAVAILABLE','demoUnavailable'], ['DEMO_PROVIDER_ERROR','demoFailed']]) {
+    globalThis.fetch = async () => Response.json({code}, {status:503});
+    await assert.rejects(evaluateQuestion({question:'O Sol é uma estrela?', context:'', apiKey:'', useReferences:false, signal:new AbortController().signal}), error => error.key === key);
+    checks++; console.log(`PASS demo message: ${code}`);
+  }
   // Regression for the reported question: simulated provider replies, not a
   // claim about what Jev actually returned in the user's original consultation.
   const mixedBasis = fixture(.02);

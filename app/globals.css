@@ -104,6 +104,15 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .experiment-notice p { margin: 0; font-size: 14px; line-height: 1.65; }
 .sensitive-pdf-notice { color: #795c2b; font-size: 14px; line-height: 1.55; margin: 0 0 15px; }
 .workspace-grid { display: grid; grid-template-columns: 1.16fr 1fr; gap: 24px; align-items: start; }
+.demo-offer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px 24px; margin: 0 0 24px; padding: 20px 24px; border: 1px solid #c9ddcf; border-radius: 16px; background: #f0f6ef; color: #23452c; }
+.demo-offer > div:first-child { flex: 1 1 340px; }
+.demo-offer strong { font-size: 15px; }
+.demo-offer p { margin: 5px 0 0; font-size: 14px; line-height: 1.5; }
+.demo-offer small { display: block; margin-top: 7px; font-size: 12px; line-height: 1.5; color: #536158; }
+.demo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.demo-actions button { background: white; font-size: 13px; }
+.demo-signin { display: inline-flex; align-items: center; min-height: 36px; padding: 8px 13px; border-radius: 8px; background: #2d5438; color: white; font-size: 13px; font-weight: 600; }
+.demo-signin:focus-visible { outline: 3px solid #557d5e; outline-offset: 3px; }
 .question-panel { background: #fff; padding: 30px; border: 1px solid #dfe6e1; border-radius: 20px; box-shadow: 0 3px 7px #12352103; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .panel-title label { font-weight: 600; font-size: 17px; }
