@@ -1,0 +1,58 @@
+SIM OU NÃO · JEV
+
+COMO ABRIR NO MAC
+1. Extraia a pasta do ZIP.
+2. Abra Abrir-no-Mac.command. Se o arquivo não tiver permissão de execução,
+   abra o Terminal, digite bash seguido de um espaço, arraste esse arquivo
+   para o Terminal e pressione Enter.
+3. O navegador abrirá o app. Mantenha a janela do Terminal aberta.
+
+COMO ABRIR NO WINDOWS
+Extraia a pasta e abra Abrir-no-Windows.bat.
+
+REQUISITOS
+Internet e Node.js 18+ OU Python 3.9+ instalado.
+Não é necessário instalar pacotes, executar npm install ou compilar o app.
+Se faltar um interpretador, instale Node.js pelo site https://nodejs.org/.
+Também é possível iniciar manualmente com node server.mjs ou python3 server.py.
+O servidor atende apenas no próprio computador e não fica exposto na rede.
+Não abra index.html diretamente; o app precisa do servidor local.
+
+CONECTAR O JEV
+No app, clique em Conectar Jev e adicione sua chave obtida em:
+https://console.typesafe.ai/keys
+Não envie a chave por mensagens. Ela fica somente na memória da aba e é
+encaminhada para a TypeSafe a cada consulta. Recarregar a página apaga a chave.
+Consultas utilizam os créditos da sua conta TypeSafe.
+O app não guarda perguntas, respostas ou chaves em disco.
+
+O QUE ELE FAZ
+- Aceita perguntas digitadas livremente e contexto opcional.
+- Consulta o modelo jev-latest pela API oficial.
+- Pode procurar referências na Wikipédia em português.
+- Mostra Sim para probabilidade de sim >= 85%, Não para <= 15% e
+  Inconclusivo entre esses limites. São regras iniciais do app.
+- Perguntas abertas, falta de contexto, cálculos e informações atuais sem
+  evidência podem ser classificadas como inconclusivas mesmo com percentual alto.
+- Permite cancelar consultas, copiar respostas e desconectar a chave.
+
+LIMITES
+Os percentuais são estimativas do modelo, não garantias de correção.
+A busca usa a Wikipédia, não toda a web, e pode falhar ou não localizar fontes.
+O app sinaliza esse caso; não inventa uma fonte nem uma resposta de demonstração.
+O Jev tem menor precisão fora do inglês segundo a TypeSafe.
+A resposta usa os dados fornecidos; o app não é um verificador universal de fatos.
+O provedor TypeSafe e a Wikimedia tratam as consultas conforme suas políticas.
+
+VALIDAÇÃO
+A interface, a montagem dos pedidos e o tratamento das respostas foram
+verificados sem uma chave real. A precisão e a autenticação com sua conta
+precisam ser confirmadas após conectar sua chave. Não há respostas simuladas
+no aplicativo entregue.
+
+ENCERRAR
+Na janela em que o app foi iniciado, pressione Ctrl+C.
+
+PUBLICAÇÃO
+Esta é a versão local. A publicação online não foi concluída porque o serviço
+de publicação estava indisponível nesta sessão.

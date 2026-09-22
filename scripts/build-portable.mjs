@@ -1,0 +1,18 @@
+import { build } from 'vite';
+import react from '@vitejs/plugin-react';
+import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+const output = resolve('outputs/Sim-ou-Nao-Jev');
+await mkdir(output, { recursive: true });
+const client = await build({ configFile: false, plugins: [react()], resolve: { alias: { '@': resolve('.') } }, define: { 'process.env.NODE_ENV': '"production"' }, build: { write: false, minify: true, cssCodeSplit: false, lib: { entry: resolve('portable/main.tsx'), name: 'SimOuNao', formats: ['iife'] } }, logLevel: 'warn' });
+const clientOutput = Array.isArray(client) ? client.flatMap(x => x.output) : client.output;
+const script = clientOutput.filter(x => x.type === 'chunk').map(x => x.code).join('\n').replace(/<\/script/gi, '<\\/script');
+const css = clientOutput.filter(x => x.type === 'asset' && x.fileName.endsWith('.css')).map(x => x.source).join('\n');
+const favicon = encodeURIComponent(await readFile('public/favicon.svg', 'utf8'));
+const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Perguntas livres com respostas Sim, Não ou Inconclusivo usando o Jev da TypeSafe."><meta name="referrer" content="no-referrer"><title>Sim ou Não · Pergunte ao Jev</title><link rel="icon" href="data:image/svg+xml,${favicon}"><style>${css}</style></head><body><div id="root"></div><noscript>Ative o JavaScript para usar este aplicativo.</noscript><script>${script}</script></body></html>`;
+await writeFile(resolve(output, 'index.html'), html);
+const api = await build({ configFile: false, build: { write: false, minify: false, lib: { entry: resolve('lib/api-handlers.ts'), formats: ['es'] } }, logLevel: 'warn' });
+const apiOutput = Array.isArray(api) ? api.flatMap(x => x.output) : api.output;
+await writeFile(resolve(output, 'api.mjs'), apiOutput.filter(x => x.type === 'chunk').map(x => x.code).join('\n'));
+for (const file of ['server.mjs','server.py','Abrir-no-Mac.command','Abrir-no-Windows.bat','LEIA-ME.txt']) await copyFile(resolve('portable', file), resolve(output, file));
+console.log(JSON.stringify({ output, htmlBytes: Buffer.byteLength(html), bundled: true }));
