@@ -234,7 +234,14 @@ export default function Home() {
         </section>
       </div>
       <UsageCounter language={language} refreshToken={usageRefresh} />
-      <footer className="page-footer"><span>{t.footer}</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer">{t.about}<ArrowUpRight size={13} /></a></footer>
+      <footer className="page-footer">
+        <address className="author-contact" aria-label={t.authorContact}>
+          <div className="author-identity"><span>{t.createdBy}</span><strong>Olympio Rennó</strong></div>
+          <span className="author-handle">@olympiorenno</span>
+          <a className="author-email" href="mailto:olympio@olympiorenno.com.br">olympio@olympiorenno.com.br</a>
+        </address>
+        <div className="footer-notes"><span>{t.footer}</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer">{t.about}<ArrowUpRight size={13} /></a></div>
+      </footer>
     </main>
     <Dialog open={demoNoticeOpen} onOpenChange={open => { setDemoNoticeOpen(open); if (!open) setDemoNoticeAccepted(true); }}>
       <DialogContent className="settings-dialog demo-notice-dialog" showCloseButton={false}>
