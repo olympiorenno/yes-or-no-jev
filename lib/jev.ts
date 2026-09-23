@@ -93,7 +93,7 @@ export async function evaluateQuestion(options: { question: string; context: str
     if (!response.ok) { try { const details = await response.json(); if (details && typeof details === "object") failure = details as typeof failure; } catch { /* Fall back to the HTTP status without exposing provider content. */ } }
     if (failure.code === "ORIGIN_REJECTED") throw new AppError("originRejected");
     if (failure.code === "DEMO_DISABLED") throw new AppError("demoDisabled");
-    if (failure.code === "DEMO_SIGN_IN_REQUIRED") throw new AppError("demoSignIn");
+    if (failure.code === "DEMO_SESSION_REQUIRED") throw new AppError("demoSession");
     if (failure.code === "DEMO_ALREADY_USED") throw new AppError("demoUsed");
     if (failure.code === "DEMO_LIMIT_REACHED") throw new AppError("demoLimit");
     if (failure.code === "DEMO_UNAVAILABLE") throw new AppError("demoUnavailable");

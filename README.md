@@ -2,19 +2,19 @@
 
 **Sim ou Não** — experimental bilingual app powered by Jev.
 
-**Public hosted app:** choose Portuguese or English. When the owner enables the demo, sign in with ChatGPT for up to three sponsored attempts. An introductory notice explains the limit and the app shows your remaining allowance. Connect your own TypeSafe API key to continue using your own credits.
+**Public hosted app:** choose Portuguese or English. When the owner enables the demo, use up to ten sponsored attempts per browser without signing in. An introductory notice explains the limit and the app shows your remaining allowance. Connect your own TypeSafe API key to continue using your own credits.
 
 Aplicativo experimental de perguntas livres com respostas **Sim**, **Não** ou **Inconclusivo**, usando o Jev da TypeSafe AI.
 
-[Usar o app — acesso público](https://sim-ou-nao-olympio.olympio224224.chatgpt.site)
+[Usar o app — acesso público](https://snjev.olympiorenno.com.br)
 
 > **Experimento:** use apenas dados fictícios ou públicos. Não insira informações sensíveis nem anexe documentos confidenciais, seus ou de terceiros. Perguntas, contexto e texto dos PDFs são enviados à TypeSafe. As respostas podem conter erros.
 
 ## Usar a versão pública
 
-1. [Abra o app](https://sim-ou-nao-olympio.olympio224224.chatgpt.site), sem precisar instalar.
+1. [Abra o app](https://snjev.olympiorenno.com.br), sem precisar instalar.
 2. Escolha português ou inglês.
-3. Leia o aviso **Antes de começar**. Se a demonstração estiver disponível, clique em **Entrar com ChatGPT** para acessar até três tentativas por conta. Ou clique em **Usar minha chave** e insira sua própria chave do [painel da TypeSafe](https://console.typesafe.ai/keys); essa opção não exige login no ChatGPT.
+3. Leia o aviso **Antes de começar**. Se a demonstração estiver disponível, use até dez tentativas por navegador, sem login. Ou clique em **Usar minha chave** e insira sua própria chave do [painel da TypeSafe](https://console.typesafe.ai/keys); essa opção não exige login no ChatGPT.
 4. Digite a pergunta e, se desejar, acrescente contexto ou um PDF.
 
 **A demonstração usa os créditos TypeSafe do responsável pelo site. Consultas com chave própria usam os créditos TypeSafe do visitante.** A chave do responsável fica em um segredo do servidor, sem ser entregue ao navegador. A demonstração continua dependendo da API Jev.
@@ -34,7 +34,7 @@ A troca de idioma muda a interface e a busca na Wikipédia. Perguntas e PDFs nã
 - Percentuais estimados de sim e não. A classificação auxiliar sobre a base da resposta não bloqueia esses percentuais.
 - Cancelamento de consultas e cópia da resposta.
 - Contador público e persistente de consultas concluídas, sem identificar visitantes.
-- Demonstração opcional: até três tentativas por conta do ChatGPT, com aviso inicial, saldo disponível na tela, limite total no servidor e continuidade por chave própria.
+- Demonstração opcional: até dez tentativas por navegador, sem login, com aviso inicial, saldo disponível na tela, limite total no servidor e continuidade por chave própria.
 
 ## Configurar a demonstração no Sites
 
@@ -47,15 +47,15 @@ O código está preparado, mas a demonstração fica desativada até o responsá
 
 Após salvar, publique novamente a versão salva para aplicar as configurações. Não envie a chave pelo chat, não use prefixos de variável pública e não a coloque no GitHub. `.env.example` contém somente os nomes e valores não sensíveis.
 
-O teto inicial é de **100 tentativas no site inteiro, durante toda a vida do banco**, sem renovação diária. Cada conta pode utilizar até **três** delas; recarregar, limpar cookies, trocar de dispositivo ou fazer chamadas simultâneas não reinicia esse saldo. Mais de uma conta pode pertencer à mesma pessoa, portanto esse limite é por conta, não por pessoa. O teto limita tentativas, não um valor monetário fixo. Para desativar a demonstração, configure o limite como `0` ou remova a chave e publique novamente. Aumentar o teto global não renova tentativas já usadas.
+O teto inicial é de **100 tentativas no site inteiro, durante toda a vida do banco**, sem renovação diária. Cada navegador pode utilizar até **dez** delas. Um cookie anônimo assinado identifica o navegador e o servidor controla o saldo. Recarregar não reinicia a cota; limpar cookies, usar navegação privada ou trocar de navegador pode reiniciá-la. Portanto, não é um limite por pessoa. O teto limita tentativas, não um valor monetário fixo. Para desativar a demonstração, configure o limite como `0` ou remova a chave e publique novamente. Aumentar o teto global não renova tentativas já usadas.
 
-Quem já utilizou a demonstração da versão anterior mantém uma tentativa consumida e passa a ter outras duas. A migração preserva esse histórico e o total global. O aviso inicial aparece ao abrir o app, antes de enviar consultas, e explica o limite, a necessidade de chave própria depois e o cuidado com informações sensíveis. Fechar o aviso não consome uma tentativa; ele reaparece ao recarregar. O saldo mostrado considera também a disponibilidade global no momento da verificação.
+Tentativas antigas por conta continuam incluídas no total global. A cota por navegador começa separadamente, sem vincular a conta anterior. O aviso inicial aparece ao abrir o app, antes de enviar consultas, e explica o limite, a necessidade de chave própria depois e o cuidado com informações sensíveis. Fechar o aviso não consome uma tentativa; ele reaparece ao recarregar. O saldo mostrado considera também a disponibilidade global no momento da verificação.
 
 A tentativa é reservada atomicamente **antes** de chamar a TypeSafe. Erro do provedor, timeout, cancelamento após envio ou resultado inconclusivo podem consumir a tentativa. Não há repetição automática de uma chamada potencialmente cobrada. Requisições rejeitadas localmente antes da reserva não consomem a tentativa. Se o banco falhar, nenhuma nova demonstração é autorizada; consultas com chave própria continuam disponíveis.
 
-O banco guarda um hash do identificador da conta do ChatGPT e o número de tentativas utilizadas na tabela `demo_claims`, exclusivamente para aplicar esse limite. É um identificador pseudônimo; não são armazenados nome, e-mail, IP, perguntas, documentos ou chaves nessa tabela. O login é tratado pelo Sites. A chave própria tem prioridade e uma chave inválida nunca faz o app recorrer silenciosamente à conta do responsável.
+O banco guarda um hash do identificador anônimo do navegador e o número de tentativas utilizadas na tabela `demo_claims`, exclusivamente para aplicar esse limite. É um identificador pseudônimo; não são armazenados nome, e-mail, IP, perguntas, documentos ou chaves nessa tabela. A chave própria tem prioridade e uma chave inválida nunca faz o app recorrer silenciosamente à conta do responsável.
 
-Essa autenticação depende dos cabeçalhos confiáveis injetados pelo Sites. Ao hospedar em outro provedor, mantenha a demonstração desativada até implementar e verificar autenticação no servidor; não confie em cabeçalhos de identidade enviados diretamente pelo cliente.
+O cookie é assinado no servidor, HttpOnly, Secure e SameSite=Lax, com duração de um ano. A demonstração exige HTTPS e cookies habilitados. Nenhum login é necessário. A assinatura impede alterar o identificador, mas não impede apagar o cookie e obter outra cota; o teto global continua limitando o consumo total.
 
 ## Contador de consultas
 
@@ -78,7 +78,7 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 pnpm dev
 ```
 
-Aplique cada migração uma única vez, na ordem, por banco local novo. Em um banco existente, aplique apenas as migrações ainda pendentes; não reaplique `0000`. O ambiente de desenvolvimento usa D1 local; a publicação no Sites provisiona o banco da hospedagem e aplica as migrações separadamente. Preserve os arquivos de `drizzle/` e a configuração `"d1": "DB"` em `.openai/hosting.json`. Sem o banco, o contador e a demonstração ficam indisponíveis, mas consultas com chave própria continuam funcionando. O login do Sites não é simulado no servidor local; os testes isolados verificam a demonstração sem credenciais reais.
+Aplique cada migração uma única vez, na ordem, por banco local novo. Em um banco existente, aplique apenas as migrações ainda pendentes; não reaplique `0000`. O ambiente de desenvolvimento usa D1 local; a publicação no Sites provisiona o banco da hospedagem e aplica as migrações separadamente. Preserve os arquivos de `drizzle/` e a configuração `"d1": "DB"` em `.openai/hosting.json`. Sem o banco, o contador e a demonstração ficam indisponíveis, mas consultas com chave própria continuam funcionando. Os testes isolados verificam cookies e cotas sem credenciais reais.
 
 Abra o endereço local informado no terminal e siga os mesmos passos de conexão descritos em **Usar a versão pública**.
 

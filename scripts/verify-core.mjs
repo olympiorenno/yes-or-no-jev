@@ -60,7 +60,7 @@ try {
     assert.equal(requests[0].init.headers['X-TypeSafe-Key'], undefined);
     assert.equal(requests[0].init.headers['X-Jev-Demo'], '1');
   });
-  for (const [code, key] of [['DEMO_DISABLED','demoDisabled'], ['DEMO_SIGN_IN_REQUIRED','demoSignIn'], ['DEMO_ALREADY_USED','demoUsed'], ['DEMO_LIMIT_REACHED','demoLimit'], ['DEMO_UNAVAILABLE','demoUnavailable'], ['DEMO_PROVIDER_ERROR','demoFailed']]) {
+  for (const [code, key] of [['DEMO_DISABLED','demoDisabled'], ['DEMO_SESSION_REQUIRED','demoSession'], ['DEMO_ALREADY_USED','demoUsed'], ['DEMO_LIMIT_REACHED','demoLimit'], ['DEMO_UNAVAILABLE','demoUnavailable'], ['DEMO_PROVIDER_ERROR','demoFailed']]) {
     globalThis.fetch = async () => Response.json({code}, {status:503});
     await assert.rejects(evaluateQuestion({question:'O Sol é uma estrela?', context:'', apiKey:'', useReferences:false, signal:new AbortController().signal}), error => error.key === key);
     checks++; console.log(`PASS demo message: ${code}`);

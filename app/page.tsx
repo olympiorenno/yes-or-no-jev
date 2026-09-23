@@ -104,9 +104,9 @@ export default function Home() {
     try { validateContext(context, pdf); } catch (err) { setError(err as AppError); return; }
     if (!demoNoticeAccepted) { setDemoNoticeOpen(true); return; }
     if (!key && demo.state !== "available") {
-      const statusMessages = { loading: "demoLoading", signin: "demoSignIn", disabled: "demoDisabled", used: "demoUsed", limit: "demoLimit", unavailable: "demoUnavailable" } as const;
+      const statusMessages = { loading: "demoLoading", disabled: "demoDisabled", used: "demoUsed", limit: "demoLimit", unavailable: "demoUnavailable" } as const;
       setError(new AppError(statusMessages[demo.state]));
-      if (demo.state !== "signin" && demo.state !== "loading") setKeyOpen(true);
+      if (demo.state !== "loading") setKeyOpen(true);
       return;
     }
     const usingDemo = !key;
@@ -135,7 +135,7 @@ export default function Home() {
     const lifecycle = new AbortController();
     try { void Promise.resolve(registry.registerTool({
       name: "ask_yes_no_question", title: "Ask Jev / Perguntar ao Jev",
-      description: "Queries Jev using the current language, context and attached PDF. Uses the connected TypeSafe account’s credits, or one of up to three sponsored demo attempts per signed-in account when available. Dismiss the introductory notice through the interface before asking. Add a personal key through the interface, never as a tool argument.",
+      description: "Queries Jev using the current language, context and attached PDF. Uses the connected TypeSafe account’s credits, or one of up to ten sponsored demo attempts per browser without signing in when available. Dismiss the introductory notice through the interface before asking. Add a personal key through the interface, never as a tool argument.",
       inputSchema: { type: "object", properties: { question: { type: "string", minLength: 5, maxLength: 1500 } }, required: ["question"], additionalProperties: false },
       annotations: { readOnlyHint: false, untrustedContentHint: true },
       async execute(input: unknown) {
@@ -178,7 +178,7 @@ export default function Home() {
         <TriangleAlert size={22} aria-hidden="true" />
         <div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div>
       </aside>
-      {!key && <DemoOffer language={language} state={demo.state} remaining={demo.remaining} signInPath={demo.signInPath} busy={busy} onConnect={() => { setKeyDraft(""); setKeyOpen(true); }} />}
+      {!key && <DemoOffer language={language} state={demo.state} remaining={demo.remaining} busy={busy} onConnect={() => { setKeyDraft(""); setKeyOpen(true); }} />}
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>

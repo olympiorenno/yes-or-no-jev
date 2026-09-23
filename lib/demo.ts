@@ -1,11 +1,11 @@
-export type DemoState = "loading" | "disabled" | "signin" | "available" | "used" | "limit" | "unavailable";
+export type DemoState = "loading" | "disabled" | "available" | "used" | "limit" | "unavailable";
 export type DemoStatus = { state: Exclude<DemoState, "loading">; remaining: number };
-const DEMO_ACCOUNT_LIMIT = 3;
+const DEMO_BROWSER_LIMIT = 10;
 export type DemoServices = {
   apiKey?: string;
   totalLimit?: string;
   getDatabase: () => D1Database;
-  getUserId: () => Promise<string | null>;
+  getVisitorId: () => Promise<string | null>;
 };
 
 const demoHeaders = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", Vary: "Cookie" };
@@ -33,7 +33,7 @@ export async function getDemoStatus(services: DemoServices): Promise<DemoStatus>
   const limit = demoLimit(services);
   if (limit === 0) return { state: "limit", remaining: 0 };
   try {
-    const userId = await services.getUserId();
+    const userId = await services.getVisitorId();
     const userHash = userId ? await demoUserHash(userId) : "";
     const status = await services.getDatabase().prepare(`
       SELECT COALESCE(SUM(attempts), 0) AS total,
@@ -41,11 +41,11 @@ export async function getDemoStatus(services: DemoServices): Promise<DemoStatus>
       FROM demo_claims
     `).bind(userHash).first<{ total: number; used: number }>();
     if (!status) throw new Error("Missing demo status");
-    if (status.used >= DEMO_ACCOUNT_LIMIT) return { state: "used", remaining: 0 };
+    if (status.used >= DEMO_BROWSER_LIMIT) return { state: "used", remaining: 0 };
     if (status.total >= limit) return { state: "limit", remaining: 0 };
     return userId
-      ? { state: "available", remaining: Math.min(DEMO_ACCOUNT_LIMIT - status.used, limit - status.total) }
-      : { state: "signin", remaining: 0 };
+      ? { state: "available", remaining: Math.min(DEMO_BROWSER_LIMIT - status.used, limit - status.total) }
+      : { state: "unavailable", remaining: 0 };
   } catch {
     console.error("demo_status_unavailable");
     return { state: "unavailable", remaining: 0 };
@@ -60,8 +60,8 @@ export async function reserveDemoKey(request: Request, services: DemoServices): 
   const limit = demoLimit(services);
   if (limit === 0) return demoError("DEMO_LIMIT_REACHED", 429);
   try {
-    const userId = await services.getUserId();
-    if (!userId) return demoError("DEMO_SIGN_IN_REQUIRED", 403);
+    const userId = await services.getVisitorId();
+    if (!userId) return demoError("DEMO_SESSION_REQUIRED", 403);
     const userHash = await demoUserHash(userId);
     const database = services.getDatabase();
     // A single atomic statement enforces both limits, including concurrent calls.
@@ -72,10 +72,10 @@ export async function reserveDemoKey(request: Request, services: DemoServices): 
       SELECT ?1, 1 WHERE (SELECT COALESCE(SUM(attempts), 0) FROM demo_claims) < ?2
       ON CONFLICT(user_hash) DO UPDATE SET attempts = demo_claims.attempts + 1
       WHERE demo_claims.attempts < ?3
-    `).bind(userHash, limit, DEMO_ACCOUNT_LIMIT).run();
+    `).bind(userHash, limit, DEMO_BROWSER_LIMIT).run();
     if (claim.meta.changes === 1) return key;
     const used = await database.prepare("SELECT attempts FROM demo_claims WHERE user_hash = ?1").bind(userHash).first<{ attempts: number }>();
-    return used && used.attempts >= DEMO_ACCOUNT_LIMIT ? demoError("DEMO_ALREADY_USED", 403) : demoError("DEMO_LIMIT_REACHED", 429);
+    return used && used.attempts >= DEMO_BROWSER_LIMIT ? demoError("DEMO_ALREADY_USED", 403) : demoError("DEMO_LIMIT_REACHED", 429);
   } catch {
     console.error("demo_reservation_failed");
     return demoError("DEMO_UNAVAILABLE", 503);
