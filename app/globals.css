@@ -220,8 +220,8 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .author-identity { display: flex; flex-direction: column; gap: 3px; }
 .author-identity > span { font-size: 12px; }
 .author-identity strong { color: #23452c; font-weight: 600; }
-.page-footer .author-email { flex-shrink: 1; min-width: 0; overflow-wrap: anywhere; color: #2d5438; text-decoration: underline; text-underline-offset: 3px; }
-.author-email:focus-visible { outline: 2px solid #557d5e; outline-offset: 4px; border-radius: 2px; }
+.page-footer .author-email, .page-footer .author-social { flex-shrink: 1; min-width: 0; overflow-wrap: anywhere; color: #2d5438; text-decoration: underline; text-underline-offset: 3px; }
+.author-email:focus-visible, .author-social:focus-visible { outline: 2px solid #557d5e; outline-offset: 4px; border-radius: 2px; }
 .footer-notes { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; width: 100%; }
 .error-message { display: flex; align-items: flex-start; gap: 8px; color: #994332; background: #fff4ee; border: 1px solid #f2d6c9; border-radius: 9px; font-size: 14px; padding: 12px; margin: 0 0 16px; }
 .error-message svg { flex-shrink: 0; margin-top: 2px; }
