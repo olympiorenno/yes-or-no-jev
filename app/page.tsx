@@ -44,8 +44,6 @@ export default function Home() {
   const [usageRefresh, setUsageRefresh] = useState(0);
   const [demoRefresh, setDemoRefresh] = useState(0);
   const demo = useDemoStatus(demoRefresh);
-  const [demoNoticeOpen, setDemoNoticeOpen] = useState(false);
-  const [demoNoticeAccepted, setDemoNoticeAccepted] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
   const [copied, setCopied] = useState(false);
   const [submittedQuestion, setSubmittedQuestion] = useState("");
@@ -63,7 +61,6 @@ export default function Home() {
 
   useEffect(() => {
     try { const saved = localStorage.getItem("jev-language"); if (saved === "pt" || saved === "en") setLanguage(saved); } catch { /* Device preferences are optional. */ }
-    setDemoNoticeOpen(true);
     return () => { active.current?.abort(); pdfActive.current?.abort(); if (copyTimer.current) clearTimeout(copyTimer.current); };
   }, []);
   useEffect(() => {
@@ -106,7 +103,6 @@ export default function Home() {
     if (pdfActive.current) { setError(new AppError("pdfWait")); return; }
     if (pdfError) { setError(pdfError); return; }
     try { validateContext(context, pdf); } catch (err) { setError(err as AppError); return; }
-    if (!demoNoticeAccepted) { setDemoNoticeOpen(true); return; }
     if (!key && demo.state !== "available") {
       const statusMessages = { loading: "demoLoading", disabled: "demoDisabled", used: "demoUsed", limit: "demoLimit", unavailable: "demoUnavailable" } as const;
       setError(new AppError(statusMessages[demo.state]));
@@ -132,7 +128,6 @@ export default function Home() {
 
   function startFun(mode: "draw" | "numerology") {
     if (inFlight.current) return;
-    if (!demoNoticeAccepted) { setDemoNoticeOpen(true); return; }
     const trimmed = question.trim();
     if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
     if (trimmed.length > 1500) { setError(new AppError("questionLong")); return; }
@@ -150,7 +145,7 @@ export default function Home() {
     const lifecycle = new AbortController();
     try { void Promise.resolve(registry.registerTool({
       name: "ask_yes_no_question", title: "Ask Jev / Perguntar ao Jev",
-      description: "Queries Jev using the current language, context and attached PDF. Uses the connected TypeSafe account’s credits, or one of up to ten sponsored demo attempts per browser without signing in when available. Dismiss the introductory notice through the interface before asking. Add a personal key through the interface, never as a tool argument.",
+      description: "Queries Jev using the current language, context and attached PDF. Uses the connected TypeSafe account’s credits, or one of up to ten sponsored demo attempts per browser without signing in when available. Add a personal key through the interface, never as a tool argument.",
       inputSchema: { type: "object", properties: { question: { type: "string", minLength: 5, maxLength: 1500 } }, required: ["question"], additionalProperties: false },
       annotations: { readOnlyHint: false, untrustedContentHint: true },
       async execute(input: unknown) {
@@ -205,6 +200,7 @@ export default function Home() {
     </header>
     <main id="main" className="workspace">
       <div className="intro"><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
+      <aside className="experiment-notice" role="note" aria-labelledby="experiment-title"><TriangleAlert size={22} aria-hidden="true" /><div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div></aside>
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
@@ -268,7 +264,6 @@ export default function Home() {
         </section>
       </div>
       {!key && <DemoOffer language={language} state={demo.state} remaining={demo.remaining} busy={busy} onConnect={() => { setKeyDraft(""); setKeyOpen(true); }} />}
-      <aside className="experiment-notice" role="note" aria-labelledby="experiment-title"><TriangleAlert size={22} aria-hidden="true" /><div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div></aside>
       <UsageCounter language={language} refreshToken={usageRefresh} />
       <footer className="page-footer">
         <address className="author-contact" aria-label={t.authorContact}>
@@ -280,14 +275,6 @@ export default function Home() {
         <div className="footer-notes"><span>{t.footer}</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer">{t.about}<ArrowUpRight size={13} /></a></div>
       </footer>
     </main>
-    <Dialog open={demoNoticeOpen} onOpenChange={open => { setDemoNoticeOpen(open); if (!open) setDemoNoticeAccepted(true); }}>
-      <DialogContent className="settings-dialog demo-notice-dialog" showCloseButton={false}>
-        <DialogHeader><DialogTitle>{t.demoNoticeTitle}</DialogTitle><DialogDescription>{t.demoNoticeDescription}</DialogDescription></DialogHeader>
-        <div className="demo-notice-warning"><TriangleAlert size={22} aria-hidden="true" /><p>{t.experimentNotice}</p></div>
-        <p className="demo-notice-note">{t.demoAttemptNote}</p>
-        <Button className="demo-notice-start" onClick={() => { setDemoNoticeAccepted(true); setDemoNoticeOpen(false); }}>{t.demoNoticeStart}</Button>
-      </DialogContent>
-    </Dialog>
     <Dialog open={keyOpen} onOpenChange={open => { setKeyOpen(open); if (!open) setKeyDraft(""); }}>
       <DialogContent className="settings-dialog" showCloseButton={false}>
         <button className="modal-close" onClick={() => { setKeyOpen(false); setKeyDraft(""); }} aria-label={t.close}><X size={20} /></button>
