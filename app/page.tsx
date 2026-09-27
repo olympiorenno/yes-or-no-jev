@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,7 @@ export default function Home() {
   }, []);
   useEffect(() => {
     document.documentElement.lang = localeFor(language);
-    document.title = `${messages[language].brand} · Jev`;
+    document.title = messages[language].brand;
   }, [language]);
 
   function changeLanguage(value: string) {
@@ -130,13 +130,14 @@ export default function Home() {
     } finally { inFlight.current = false; setBusy(false); setPhase(null); active.current = null; if (usingDemo) setDemoRefresh(value => value + 1); }
   }
 
-  function startFun() {
+  function startFun(mode: "draw" | "numerology") {
     if (inFlight.current) return;
     if (!demoNoticeAccepted) { setDemoNoticeOpen(true); return; }
     const trimmed = question.trim();
     if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
     if (trimmed.length > 1500) { setError(new AppError("questionLong")); return; }
-    setError(null); setResult(null); setFunOnly(true); setDrawn(null); setNumerological(null); setSubmittedQuestion(trimmed); setSubmittedPdf("");
+    const date = new Date();
+    setError(null); setResult(null); setFunOnly(true); setDrawn(mode === "draw" ? drawAnswer() : null); setNumerological(mode === "numerology" ? { ...numerology(trimmed, date), date: date.toLocaleDateString(locale) } : null); setSubmittedQuestion(trimmed); setSubmittedPdf("");
     requestAnimationFrame(() => resultHeading.current?.focus({ preventScroll: true }));
   }
 
@@ -203,18 +204,18 @@ export default function Home() {
       </div>
     </header>
     <main id="main" className="workspace">
-      <div className="intro"><p className="eyebrow"><span className="tiny-slash">/</span>{t.eyebrow}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
-      <aside className="experiment-notice" role="note" aria-labelledby="experiment-title">
-        <TriangleAlert size={22} aria-hidden="true" />
-        <div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div>
-      </aside>
-      {!key && <DemoOffer language={language} state={demo.state} remaining={demo.remaining} busy={busy} onConnect={() => { setKeyDraft(""); setKeyOpen(true); }} />}
+      <div className="intro"><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
-            <div className="panel-title"><label id="question-label" htmlFor="question">{t.question}</label><span>01</span></div>
+            <div className="panel-title"><label id="question-label" htmlFor="question">{t.question}</label></div>
             <Textarea ref={questionInput} id="question" className="question-input" value={question} maxLength={1500} disabled={busy} onChange={e => { setQuestion(e.target.value); setError(null); }} placeholder={t.placeholder} aria-describedby="question-hint" onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !inFlight.current) { e.preventDefault(); void ask(); } }} />
             <div className="under-input"><span id="question-hint">{t.oneQuestion}</span><span>{number(question.length)} / {number(1500)}</span></div>
+            <div className="answer-modes" aria-label={t.chooseMethod}>
+              <button type="button" className="mode-card mode-draw" onClick={() => startFun("draw")} disabled={busy || question.trim().length < 5}><Dices size={25} aria-hidden="true" /><strong>{t.playfulDraw}</strong><span>{t.drawCardHint}</span></button>
+              <button type="button" className="mode-card mode-number" onClick={() => startFun("numerology")} disabled={busy || question.trim().length < 5}><Sparkles size={25} aria-hidden="true" /><strong>{t.playfulNumerology}</strong><span>{t.numberCardHint}</span></button>
+            </div>
+            <div className="ai-divider"><span>{t.aiOption}</span></div>
             <div className="context-controls">
               <button className="context-trigger" type="button" aria-expanded={contextOpen} aria-controls="extra-context" onClick={() => setContextOpen(!contextOpen)} disabled={busy}>{contextOpen ? <ChevronDown size={17} /> : <Plus size={17} />}{t.addContext}<span>{t.optional}</span></button>
               <Button type="button" variant="outline" className="attach-button" aria-describedby="pdf-sensitive-notice" disabled={busy || pdfBusy} onClick={() => pdfInput.current?.click()}><Paperclip size={16} />{pdf ? t.replacePdf : t.attachPdf}</Button>
@@ -240,7 +241,7 @@ export default function Home() {
             <p className="search-note">{t.searchNote}</p>
             {error && <div className="error-message" role="alert"><CircleHelp size={18} /><span>{message(language, error.key, error.values)}</span></div>}
             <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{!key && demo.state === "available" ? t.demoAsk : t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
-            <div className="fun-entry"><Button type="button" className="fun-button" onClick={startFun} disabled={busy || question.trim().length < 5}>{t.funOnlyStart}</Button><p>{t.funOnlyHint}</p></div>
+            <p className="ai-hint">{t.aiCardHint}</p>
           </form>
           <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
         </section>
@@ -266,6 +267,8 @@ export default function Home() {
           <div className="answer-footer"><ShieldCheck size={17} /><span>{funOnly ? t.playfulDisclaimer : t.estimateNote}</span></div>
         </section>
       </div>
+      {!key && <DemoOffer language={language} state={demo.state} remaining={demo.remaining} busy={busy} onConnect={() => { setKeyDraft(""); setKeyOpen(true); }} />}
+      <aside className="experiment-notice" role="note" aria-labelledby="experiment-title"><TriangleAlert size={22} aria-hidden="true" /><div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div></aside>
       <UsageCounter language={language} refreshToken={usageRefresh} />
       <footer className="page-footer">
         <address className="author-contact" aria-label={t.authorContact}>
