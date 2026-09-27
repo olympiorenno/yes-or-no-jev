@@ -237,7 +237,7 @@ export default function Home() {
       </div>
     </header>
     <main id="main" className="workspace">
-      <div className="intro"><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
+      <div className="intro"><div className="intro-copy"><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1></div><img className="intro-art" src={language === "en" ? "/question-hero-en.webp" : "/question-hero-pt.webp"} width="600" height="600" alt={t.heroAlt} /><p className="intro-subtitle">{t.subtitle}</p></div>
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
