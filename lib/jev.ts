@@ -1,5 +1,6 @@
 import { AppError, message, type Language, type MessageKey } from "./i18n";
 import { validateContext, type PdfContext } from "./context";
+import { demoSessionHeaders } from "./demo-session";
 
 export type Reference = { title: string; url: string; text: string };
 export type Evaluation = { label: string; kind: "yes" | "no" | "uncertain"; probabilityYes: number | null; reason: string; reasonKey: MessageKey; referenceNoticeKey: MessageKey | null; references: Reference[]; referenceNotice: string; model: string };
@@ -87,7 +88,7 @@ export async function evaluateQuestion(options: { question: string; context: str
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (options.apiKey) headers["X-TypeSafe-Key"] = options.apiKey;
-    else headers["X-Jev-Demo"] = "1";
+    else { headers["X-Jev-Demo"] = "1"; Object.assign(headers, demoSessionHeaders()); }
     const response = await fetch("/api/jev", { method: "POST", headers, body: JSON.stringify(buildRequest(options.question, options.context, references, language, options.pdf)), signal: timeout.signal, cache: "no-store", credentials: "same-origin" });
     let failure: { code?: string; upstream_status?: number } = {};
     if (!response.ok) { try { const details = await response.json(); if (details && typeof details === "object") failure = details as typeof failure; } catch { /* Fall back to the HTTP status without exposing provider content. */ } }

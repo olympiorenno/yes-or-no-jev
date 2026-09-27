@@ -14,6 +14,7 @@ import { contextLength, MAX_CONTEXT_CHARS, validateContext, type PdfContext } fr
 import { readPdf } from "@/lib/pdf";
 import { UsageCounter } from "@/components/usage-counter";
 import { DemoOffer, useDemoStatus } from "@/components/demo-offer";
+import { drawAnswer, numerology, type PlayfulAnswer } from "@/lib/playful";
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>("pt");
@@ -37,6 +38,8 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<MessageKey | null>(null);
   const [result, setResult] = useState<Evaluation | null>(null);
+  const [drawn, setDrawn] = useState<PlayfulAnswer | null>(null);
+  const [numerological, setNumerological] = useState<{ answer: PlayfulAnswer; number: number; date: string } | null>(null);
   const [usageRefresh, setUsageRefresh] = useState(0);
   const [demoRefresh, setDemoRefresh] = useState(0);
   const demo = useDemoStatus(demoRefresh);
@@ -75,7 +78,7 @@ export default function Home() {
 
   function removePdf() {
     pdfActive.current?.abort(); pdfActive.current = null;
-    setPdf(null); setPdfBusy(false); setPdfError(null); setPdfProgress(null); setReadingName(""); setResult(null);
+    setPdf(null); setPdfBusy(false); setPdfError(null); setPdfProgress(null); setReadingName(""); setResult(null); setDrawn(null); setNumerological(null);
     if (pdfInput.current) pdfInput.current.value = "";
   }
 
@@ -83,7 +86,7 @@ export default function Home() {
     if (!file || inFlight.current) return;
     pdfActive.current?.abort();
     const controller = new AbortController(); pdfActive.current = controller;
-    setPdf(null); setPdfError(null); setPdfBusy(true); setPdfProgress(null); setReadingName(file.name); setResult(null); setError(null); setContextOpen(true);
+    setPdf(null); setPdfError(null); setPdfBusy(true); setPdfProgress(null); setReadingName(file.name); setResult(null); setDrawn(null); setNumerological(null); setError(null); setContextOpen(true);
     try {
       const document = await readPdf(file, controller.signal, (page, total) => { if (pdfActive.current === controller) setPdfProgress({ page, total }); });
       if (pdfActive.current === controller) setPdf(document);
@@ -112,7 +115,7 @@ export default function Home() {
     const usingDemo = !key;
     inFlight.current = true;
     const controller = new AbortController(); active.current = controller;
-    setBusy(true); setError(null); setResult(null); setCopied(false); setSubmittedQuestion(trimmed); setSubmittedPdf(pdf?.name || "");
+    setBusy(true); setError(null); setResult(null); setDrawn(null); setNumerological(null); setCopied(false); setSubmittedQuestion(trimmed); setSubmittedPdf(pdf?.name || "");
     try {
       const answer = await evaluateQuestion({ question: trimmed, context: context.trim(), pdf, language, apiKey: key, useReferences: search, signal: controller.signal, onPhase: setPhase });
       setResult(answer); setKeyUsed(!usingDemo); setUsageRefresh(value => value + 1);
@@ -154,7 +157,7 @@ export default function Home() {
 
   async function copyAnswer() {
     if (!result) return;
-    const text = `${submittedQuestion}\n${t[result.kind]}\n${t[result.reasonKey]}${result.probabilityYes === null ? "" : `\n${t.probabilityYes}: ${percent(result.probabilityYes)}%\n${t.probabilityNo}: ${percent(1 - result.probabilityYes)}%`}${submittedPdf ? `\n${message(language, "attachedContext", { name: submittedPdf })}` : ""}${result.references.length ? `\n${t.sources}: ${result.references.map(s => s.url).join(", ")}` : ""}`;
+    const text = `${submittedQuestion}\nJev: ${t[result.kind]}\n${t[result.reasonKey]}${result.probabilityYes === null ? "" : `\n${t.probabilityYes}: ${percent(result.probabilityYes)}%\n${t.probabilityNo}: ${percent(1 - result.probabilityYes)}%`}${submittedPdf ? `\n${message(language, "attachedContext", { name: submittedPdf })}` : ""}${result.references.length ? `\n${t.sources}: ${result.references.map(s => s.url).join(", ")}` : ""}${drawn ? `\n${t.playfulDraw}: ${t[drawn]} (${t.playfulDisclaimer})` : ""}${numerological ? `\n${t.playfulNumerology}: ${t[numerological.answer]} (${t.playfulNumber} ${numerological.number}; ${t.playfulDisclaimer})` : ""}`;
     try { await navigator.clipboard.writeText(text); setCopied(true); if (copyTimer.current) clearTimeout(copyTimer.current); copyTimer.current = setTimeout(() => setCopied(false), 2200); }
     catch { setError(new AppError("copyError")); }
   }
@@ -211,7 +214,7 @@ export default function Home() {
             {error && <div className="error-message" role="alert"><CircleHelp size={18} /><span>{message(language, error.key, error.values)}</span></div>}
             <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{!key && demo.state === "available" ? t.demoAsk : t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
           </form>
-          <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
+          <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); setDrawn(null); setNumerological(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
         </section>
         <section className={`answer-panel ${result ? result.kind : "empty"}`} aria-labelledby="answer-heading" aria-busy={busy}>
           <div className="answer-top"><span>{t.answer}</span><span className="answer-tag">{busy ? t.consulting : result ? "Jev" : t.waiting}</span></div>
@@ -227,6 +230,19 @@ export default function Home() {
                 {submittedPdf && <p className="reference-notice pdf-used"><FileText size={15} />{message(language, "attachedContext", { name: submittedPdf })}</p>}
                 {result.references.length > 0 && <div className="result-sources"><h3>{t.sources}</h3>{result.references.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}<ArrowUpRight size={14} /></a>)}</div>}
                 {result.referenceNotice && <p className="reference-notice">{result.referenceNoticeKey ? t[result.referenceNoticeKey] : result.referenceNotice}</p>}
+                {result.kind === "uncertain" && <div className="playful-panel">
+                  <h3>{t.playfulTitle}</h3>
+                  <p>{t.playfulDescription}</p>
+                  <div className="playful-options">
+                    <button type="button" onClick={() => setDrawn(drawAnswer())}>{t.playfulDraw}</button>
+                    <button type="button" onClick={() => { const date = new Date(); setNumerological({ ...numerology(submittedQuestion, date), date: date.toLocaleDateString(locale) }); }}>{t.playfulNumerology}</button>
+                  </div>
+                  {(drawn || numerological) && <div className="playful-results" aria-live="polite">
+                    {drawn && <p><span>{t.playfulDraw}</span><strong>{t[drawn]}</strong></p>}
+                    {numerological && <p><span>{t.playfulNumerology}</span><strong>{t[numerological.answer]}</strong><small>{t.playfulNumber} {numerological.number} · {numerological.date}</small></p>}
+                  </div>}
+                  <small>{t.playfulDisclaimer}</small>
+                </div>}
                 <div className="result-actions"><button onClick={copyAnswer}><Copy size={16} />{copied ? t.copied : t.copy}</button><span>{result.model}</span></div>
               </div>}
           </div>

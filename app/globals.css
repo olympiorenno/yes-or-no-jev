@@ -204,6 +204,18 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .result-sources a { display: flex; align-items: center; gap: 5px; color: #d1e8be; font-size: 14px; margin-top: 7px; text-decoration: none; }
 .result-sources a:hover { text-decoration: underline; }
 .reference-notice { font-size: 12px; color: #8fac99; margin: 21px 0 0; }
+.playful-panel { margin-top: 24px; padding: 20px; border: 1px solid #71805e; border-radius: 13px; background: #233a31; }
+.playful-panel h3 { margin: 0 0 5px; color: #e8f2d9; font-size: 17px; font-weight: 560; }
+.playful-panel > p { margin: 0 0 15px; color: #bbcfbc; font-size: 13px; line-height: 1.5; }
+.playful-options { display: flex; flex-wrap: wrap; gap: 9px; }
+.playful-options button { border: 1px solid #8ca37a; border-radius: 8px; padding: 10px 14px; color: #e9f6d6; background: #354f3e; font-size: 14px; cursor: pointer; }
+.playful-options button:hover, .playful-options button:focus-visible { background: #49684d; outline-color: #c5ed76; }
+.playful-results { display: grid; gap: 8px; margin: 16px 0 9px; }
+.playful-results p { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.playful-results span { color: #c2d5c3; font-size: 13px; min-width: 125px; }
+.playful-results strong { color: #fff0ad; font-size: 20px; }
+.playful-results small { color: #aec5af; font-size: 12px; }
+.playful-panel > small { display: block; color: #aec5af; line-height: 1.5; margin-top: 14px; font-size: 12px; }
 .result-actions { display: flex; justify-content: space-between; align-items: center; gap: 9px; margin-top: 24px; }
 .result-actions button { display: flex; align-items: center; gap: 7px; background: none; border: 0; color: #c7ddba; font-size: 13px; padding: 8px 0; }
 .result-actions > span { color: #82a28a; font-size: 11px; }

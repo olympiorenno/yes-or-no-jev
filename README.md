@@ -32,6 +32,7 @@ A troca de idioma muda a interface e a busca na Wikipédia. Perguntas e PDFs nã
 - PDF com texto selecionável: até 10 MB, 100 páginas e 30.000 caracteres de contexto total. A leitura acontece no navegador, com prévia do texto e opção de remover o anexo. Não há OCR.
 - Busca opcional na Wikipédia no idioma selecionado; o documento e o contexto adicional não entram nessa busca.
 - Percentuais estimados de sim e não. A classificação auxiliar sobre a base da resposta não bloqueia esses percentuais.
+- Se o Jev responder "Inconclusivo", opções lúdicas para sortear Sim/Não ou calcular um número de 1 a 9 a partir das letras da pergunta e da data local (ímpar = Sim, par = Não). São resultados opcionais, sem valor preditivo ou percentual, calculados no navegador e sem nova consulta à TypeSafe. A mesma pergunta no mesmo dia produz o mesmo número.
 - Cancelamento de consultas e cópia da resposta.
 - Contador público e persistente de consultas concluídas, sem identificar visitantes.
 - Demonstração opcional: até dez tentativas por navegador, sem login, com aviso inicial, saldo disponível na tela, limite total no servidor e continuidade por chave própria.

@@ -46,7 +46,7 @@ const body = JSON.stringify({ model: 'jev-latest', state: 'private-question-mark
 const dispatch = (user, extra = {}, payload = body) => worker.dispatchFetch('https://app.example/api/jev', {
   method: 'POST', headers: { Origin: 'https://app.example', 'Content-Type': 'application/json', ...('X-TypeSafe-Key' in extra ? {} : { 'X-Jev-Demo': '1' }), ...(user ? { Cookie: user } : {}), ...extra }, body: payload,
 });
-const status = async (user, extra = {}) => (await worker.dispatchFetch('https://app.example/api/demo', { headers: { ...(user ? { Cookie: user } : {}), ...extra } })).json();
+const status = async (user, extra = {}) => { const { sessionToken, ...result } = await (await worker.dispatchFetch('https://app.example/api/demo', { headers: { ...(user ? { Cookie: user } : {}), ...extra } })).json(); return result; };
 const expectCode = async (response, code) => assert.equal((await response.json()).code, code);
 
 try {
@@ -60,17 +60,20 @@ try {
   }
   const session = async () => {
     const response = await worker.dispatchFetch('https://app.example/api/demo');
-    assert.deepEqual(await response.json(), { state: 'available', remaining: 10 });
+    const { sessionToken, ...result } = await response.json();
+    assert.deepEqual(result, { state: 'available', remaining: 10 });
     assert.equal(response.headers.get('cache-control'), 'private, no-store');
     const cookie = response.headers.get('set-cookie');
     assert.match(cookie, /HttpOnly; Secure; SameSite=Lax; Max-Age=31536000/);
     assert.ok(!cookie.includes(ownerKey));
+    assert.equal(cookie.split(';')[0].split('=')[1], sessionToken);
     return cookie.split(';')[0];
   };
   const browser = await session();
   const again = await worker.dispatchFetch('https://app.example/api/demo', { headers: { Cookie: browser } });
   assert.equal(again.headers.get('set-cookie'), null);
   await expectCode(await dispatch(), 'DEMO_SESSION_REQUIRED');
+  await expectCode(await dispatch(null, { 'X-Jev-Session': 'forged-session' }), 'DEMO_SESSION_REQUIRED');
   await expectCode(await dispatch(browser.slice(0, -1) + (browser.endsWith('a') ? 'b' : 'a')), 'DEMO_SESSION_REQUIRED');
   await expectCode(await dispatch(browser, { Origin: 'https://other.invalid' }), 'ORIGIN_REJECTED');
   await expectCode(await dispatch(browser, { 'X-Test-Disabled': '1' }), 'DEMO_DISABLED');
@@ -79,7 +82,11 @@ try {
   assert.equal(outgoing.length, 0);
   console.log('PASS anonymous signed cookie; tampering, missing cookie and invalid requests cannot spend credits');
 
-  assert.equal((await dispatch(browser)).status, 200);
+  const sessionToken = browser.split('=')[1];
+  assert.equal((await dispatch(null, { 'X-Jev-Session': sessionToken })).status, 200);
+  const noCookieStatus = await worker.dispatchFetch('https://app.example/api/demo', { headers: { 'X-Jev-Session': sessionToken } });
+  assert.equal(noCookieStatus.headers.get('set-cookie'), null);
+  assert.deepEqual(await noCookieStatus.json(), { state: 'available', remaining: 9, sessionToken });
   assert.deepEqual(await status(browser), { state: 'available', remaining: 9 });
   const calls = await Promise.all(Array.from({ length: 15 }, () => dispatch(browser)));
   assert.equal(calls.filter(r => r.status === 200).length, 9);
@@ -90,6 +97,7 @@ try {
   assert.deepEqual(await status(browser), { state: 'used', remaining: 0 });
   await worker.dispose(); worker = new Miniflare(options); database = await worker.getD1Database('DB');
   await expectCode(await dispatch(browser), 'DEMO_ALREADY_USED');
+  await expectCode(await dispatch(null, { 'X-Jev-Session': sessionToken }), 'DEMO_ALREADY_USED');
   console.log('PASS exactly ten attempts under concurrency; eleventh blocked; refresh/restart preserves quota');
 
   const browser2 = await session();

@@ -5,6 +5,7 @@ import { KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { message, messages, type Language } from "@/lib/i18n";
 import type { DemoState } from "@/lib/demo";
+import { demoSessionHeaders, rememberDemoSession } from "@/lib/demo-session";
 
 export function useDemoStatus(refreshToken: number) {
   const [state, setState] = useState<DemoState>("loading");
@@ -16,13 +17,14 @@ export function useDemoStatus(refreshToken: number) {
     setState("loading");
     void (async () => {
       try {
-        const response = await fetch("/api/demo", { cache: "no-store", credentials: "same-origin", signal: controller.signal });
+        const response = await fetch("/api/demo", { headers: demoSessionHeaders(), cache: "no-store", credentials: "same-origin", signal: controller.signal });
         if (!response.ok) throw new Error("Demo unavailable");
-        const data = await response.json() as { state?: unknown; remaining?: unknown } | null;
+        const data = await response.json() as { state?: unknown; remaining?: unknown; sessionToken?: unknown } | null;
         const allowed = ["disabled", "available", "used", "limit", "unavailable"];
         if (typeof data?.state !== "string" || !allowed.includes(data.state)) throw new Error("Invalid demo status");
         if (typeof data.remaining !== "number" || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 10 || (data.state === "available" && data.remaining === 0)) throw new Error("Invalid demo allowance");
         if (active) {
+          rememberDemoSession(data.sessionToken);
           setState(data.state as DemoState);
           setRemaining(data.remaining);
         }
