@@ -286,6 +286,13 @@ h1 { font-size: clamp(34px, 4vw, 52px); line-height: 1.1; letter-spacing: -2px; 
 .panel-title { margin-bottom: 11px; }
 .panel-title label { font-size: 18px; }
 .question-input { min-height: 112px; background: #fafafd; border-color: #d9dbe5; }
+.question-field { position: relative; }
+.question-field .question-input { padding-right: 76px; }
+.speech-button { position: absolute; right: 12px; bottom: 12px; height: 44px; width: 44px; border-radius: 12px; border-color: #d5c6ec; background: #f3edff; color: #4d3475; box-shadow: none; }
+.speech-button:hover { background: #e9dcff; color: #392459; }
+.speech-button.is-listening { background: #4d3475; border-color: #4d3475; color: white; box-shadow: 0 0 0 4px #d9c7f5; }
+.speech-button:disabled { opacity: .55; }
+.speech-hint { color: #616879; font-size: 13px; line-height: 1.4; margin: 6px 1px 0; }
 .question-input:focus { border-color: #8f73c2; }
 .under-input { margin-bottom: 18px; }
 .answer-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

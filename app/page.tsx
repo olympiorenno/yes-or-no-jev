@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles, BrainCircuit } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles, BrainCircuit, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,15 @@ import { UsageCounter } from "@/components/usage-counter";
 import { DemoOffer, useDemoStatus } from "@/components/demo-offer";
 import { drawAnswer, numerology, type PlayfulAnswer } from "@/lib/playful";
 
+type BrowserSpeechRecognition = {
+  lang: string; continuous: boolean; interimResults: boolean;
+  onstart: (() => void) | null; onend: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  start(): void; stop(): void; abort(): void;
+};
+type SpeechWindow = Window & { SpeechRecognition?: new () => BrowserSpeechRecognition; webkitSpeechRecognition?: new () => BrowserSpeechRecognition };
+
 export default function Home() {
   const [language, setLanguage] = useState<Language>("pt");
   const t = messages[language];
@@ -23,6 +32,9 @@ export default function Home() {
   const percent = (n: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(n * 100);
   const number = (n: number) => n.toLocaleString(locale);
   const [question, setQuestion] = useState("");
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speechNotice, setSpeechNotice] = useState<MessageKey | null>(null);
   const [context, setContext] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
   const [pdf, setPdf] = useState<PdfContext | null>(null);
@@ -53,6 +65,7 @@ export default function Home() {
   const pdfActive = useRef<AbortController | null>(null);
   const pdfInput = useRef<HTMLInputElement>(null);
   const questionInput = useRef<HTMLTextAreaElement>(null);
+  const speechActive = useRef<BrowserSpeechRecognition | null>(null);
   const inFlight = useRef(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
@@ -61,7 +74,9 @@ export default function Home() {
 
   useEffect(() => {
     try { const saved = localStorage.getItem("jev-language"); if (saved === "pt" || saved === "en") setLanguage(saved); } catch { /* Device preferences are optional. */ }
-    return () => { active.current?.abort(); pdfActive.current?.abort(); if (copyTimer.current) clearTimeout(copyTimer.current); };
+    const browser = window as SpeechWindow;
+    setSpeechSupported(!!(browser.SpeechRecognition || browser.webkitSpeechRecognition));
+    return () => { active.current?.abort(); pdfActive.current?.abort(); if (speechActive.current) { speechActive.current.onend = null; speechActive.current.abort(); } if (copyTimer.current) clearTimeout(copyTimer.current); };
   }, []);
   useEffect(() => {
     document.documentElement.lang = localeFor(language);
@@ -70,8 +85,30 @@ export default function Home() {
 
   function changeLanguage(value: string) {
     if (value !== "pt" && value !== "en") return;
+    if (speechActive.current) { speechActive.current.onend = null; speechActive.current.abort(); speechActive.current = null; setListening(false); setSpeechNotice(null); }
     setLanguage(value);
     try { localStorage.setItem("jev-language", value); } catch { /* Keep working without browser storage. */ }
+  }
+
+  function toggleSpeech() {
+    if (listening && speechActive.current) { speechActive.current.stop(); return; }
+    if (speechActive.current) return;
+    const browser = window as SpeechWindow;
+    const Recognition = browser.SpeechRecognition || browser.webkitSpeechRecognition;
+    if (!Recognition) { setSpeechNotice("speechUnavailable"); return; }
+    const recognition = new Recognition();
+    speechActive.current = recognition;
+    recognition.lang = locale;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => { setListening(true); setSpeechNotice("speechListening"); };
+    recognition.onresult = event => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (transcript) { setQuestion(previous => `${previous.trim()}${previous.trim() ? " " : ""}${transcript}`.slice(0, 1500)); setError(null); setSpeechNotice("speechReview"); questionInput.current?.focus(); }
+    };
+    recognition.onerror = event => { setSpeechNotice(event.error === "not-allowed" || event.error === "service-not-allowed" ? "speechDenied" : event.error === "no-speech" ? "speechNoAudio" : "speechFailed"); };
+    recognition.onend = () => { setListening(false); if (speechActive.current === recognition) speechActive.current = null; setSpeechNotice(current => current === "speechListening" ? "speechNoAudio" : current); };
+    try { recognition.start(); } catch { speechActive.current = null; setListening(false); setSpeechNotice("speechFailed"); }
   }
 
   function removePdf() {
@@ -96,6 +133,7 @@ export default function Home() {
   }
 
   async function ask(value = question) {
+    if (speechActive.current) return;
     const trimmed = value.trim();
     if (inFlight.current) throw new AppError("inFlight");
     if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
@@ -127,7 +165,7 @@ export default function Home() {
   }
 
   function startFun(mode: "draw" | "numerology") {
-    if (inFlight.current) return;
+    if (inFlight.current || speechActive.current) return;
     const trimmed = question.trim();
     if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
     if (trimmed.length > 1500) { setError(new AppError("questionLong")); return; }
@@ -204,12 +242,13 @@ export default function Home() {
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
             <div className="panel-title"><label id="question-label" htmlFor="question">{t.question}</label></div>
-            <Textarea ref={questionInput} id="question" className="question-input" value={question} maxLength={1500} disabled={busy} onChange={e => { setQuestion(e.target.value); setError(null); }} placeholder={t.placeholder} aria-describedby="question-hint" onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !inFlight.current) { e.preventDefault(); void ask(); } }} />
+            <div className="question-field"><Textarea ref={questionInput} id="question" className="question-input" value={question} maxLength={1500} disabled={busy} onChange={e => { setQuestion(e.target.value); setError(null); }} placeholder={t.placeholder} aria-describedby="question-hint speech-hint" onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !inFlight.current && !speechActive.current) { e.preventDefault(); void ask(); } }} /><Button type="button" className={`speech-button ${listening ? "is-listening" : ""}`} variant="outline" onClick={toggleSpeech} disabled={busy || !speechSupported} aria-label={listening ? t.speechStop : speechSupported ? t.speechStart : t.speechUnavailable} aria-pressed={listening} title={speechSupported ? (listening ? t.speechStop : t.speechStart) : t.speechUnavailable}>{listening ? <MicOff size={20} /> : <Mic size={20} />}</Button></div>
+            <p id="speech-hint" className="speech-hint" role="status">{speechNotice ? t[speechNotice] : speechSupported ? t.speechPrivacy : t.speechUnavailable}</p>
             <div className="under-input"><span id="question-hint">{t.oneQuestion}</span><span>{number(question.length)} / {number(1500)}</span></div>
             <div className="answer-modes" aria-label={t.chooseMethod}>
-              <button type="button" className="mode-card mode-draw" onClick={() => startFun("draw")} disabled={busy || question.trim().length < 5}><Dices size={25} aria-hidden="true" /><strong>{t.playfulDraw}</strong><span>{t.drawCardHint}</span></button>
-              <button type="button" className="mode-card mode-number" onClick={() => startFun("numerology")} disabled={busy || question.trim().length < 5}><Sparkles size={25} aria-hidden="true" /><strong>{t.playfulNumerology}</strong><span>{t.numberCardHint}</span></button>
-              <Button type="submit" className="mode-card mode-ai" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={25} className="spin" /><strong>{phase ? t[phase] : t.querying}</strong></> : <><BrainCircuit size={25} aria-hidden="true" /><strong>{t.demoAsk}</strong><span>{t.aiCardHint}</span></>}</Button>
+              <button type="button" className="mode-card mode-draw" onClick={() => startFun("draw")} disabled={busy || listening || question.trim().length < 5}><Dices size={25} aria-hidden="true" /><strong>{t.playfulDraw}</strong><span>{t.drawCardHint}</span></button>
+              <button type="button" className="mode-card mode-number" onClick={() => startFun("numerology")} disabled={busy || listening || question.trim().length < 5}><Sparkles size={25} aria-hidden="true" /><strong>{t.playfulNumerology}</strong><span>{t.numberCardHint}</span></button>
+              <Button type="submit" className="mode-card mode-ai" disabled={busy || listening || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={25} className="spin" /><strong>{phase ? t[phase] : t.querying}</strong></> : <><BrainCircuit size={25} aria-hidden="true" /><strong>{t.demoAsk}</strong><span>{t.aiCardHint}</span></>}</Button>
             </div>
             <aside className="experiment-notice" role="note" aria-labelledby="experiment-title"><TriangleAlert size={19} aria-hidden="true" /><div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div></aside>
             {busy && <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button>}
