@@ -230,7 +230,7 @@ export default function Home() {
                 {submittedPdf && <p className="reference-notice pdf-used"><FileText size={15} />{message(language, "attachedContext", { name: submittedPdf })}</p>}
                 {result.references.length > 0 && <div className="result-sources"><h3>{t.sources}</h3>{result.references.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}<ArrowUpRight size={14} /></a>)}</div>}
                 {result.referenceNotice && <p className="reference-notice">{result.referenceNoticeKey ? t[result.referenceNoticeKey] : result.referenceNotice}</p>}
-                {result.kind === "uncertain" && <div className="playful-panel">
+                <div className="playful-panel">
                   <h3>{t.playfulTitle}</h3>
                   <p>{t.playfulDescription}</p>
                   <div className="playful-options">
@@ -242,7 +242,7 @@ export default function Home() {
                     {numerological && <p><span>{t.playfulNumerology}</span><strong>{t[numerological.answer]}</strong><small>{t.playfulNumber} {numerological.number} · {numerological.date}</small></p>}
                   </div>}
                   <small>{t.playfulDisclaimer}</small>
-                </div>}
+                </div>
                 <div className="result-actions"><button onClick={copyAnswer}><Copy size={16} />{copied ? t.copied : t.copy}</button><span>{result.model}</span></div>
               </div>}
           </div>
