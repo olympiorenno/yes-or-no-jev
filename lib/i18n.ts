@@ -4,7 +4,7 @@ export const localeFor = (language: Language) => language === "en" ? "en-US" : "
 const pt = {
   brand: "Sim ou Não", byline: "Pergunte. Escolha. Descubra.", home: "Sim ou Não, início", language: "Idioma",
   help: "Como funciona", connected: "Jev conectado", keyAdded: "Chave adicionada", connect: "Conectar Jev",
-  eyebrow: "UMA PERGUNTA, TRÊS CAMINHOS", title: "Qual é a sua pergunta?", subtitle: "Escreva uma pergunta de sim ou não. Sorteie, brinque com numerologia ou consulte a IA — você escolhe.",
+  eyebrow: "UMA PERGUNTA, TRÊS CAMINHOS", title: "Qual é a sua pergunta?", subtitle: "Escreva ou fale uma pergunta que possa ser respondida com sim ou não. Depois escolha: Sorteio, Numerologia ou IA (Jev).",
   experimentTitle: "Sobre a consulta com IA",
   experimentNotice: "Esta análise é experimental e pode errar. Ao usar a IA, a pergunta, o contexto e o texto do PDF são enviados à TypeSafe (Jev). Não inclua dados sensíveis nem documentos confidenciais.",
   sensitivePdfNotice: "Não anexe PDFs com informações sensíveis ou sigilosas.",
@@ -99,7 +99,7 @@ export type MessageKey = keyof typeof pt;
 const en: Record<MessageKey, string> = {
   brand: "Yes or No", byline: "Ask. Choose. Discover.", home: "Yes or No, home", language: "Language",
   help: "How it works", connected: "Jev connected", keyAdded: "Key added", connect: "Connect Jev",
-  eyebrow: "ONE QUESTION, THREE WAYS", title: "What’s your question?", subtitle: "Ask a yes-or-no question. Draw an answer, try numerology, or consult AI — your choice.",
+  eyebrow: "ONE QUESTION, THREE WAYS", title: "What’s your question?", subtitle: "Type or say a question that can be answered with yes or no. Then choose: Draw, Numerology, or AI (Jev).",
   experimentTitle: "About the AI query",
   experimentNotice: "This analysis is experimental and may be wrong. If you use AI, your question, context, and PDF text are sent to TypeSafe (Jev). Do not include sensitive data or confidential documents.",
   sensitivePdfNotice: "Do not attach PDFs containing sensitive or confidential information.",
