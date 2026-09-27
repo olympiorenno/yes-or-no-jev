@@ -206,7 +206,10 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .reference-notice { font-size: 12px; color: #8fac99; margin: 21px 0 0; }
 .playful-panel { margin-top: 24px; padding: 20px; border: 1px solid #71805e; border-radius: 13px; background: #233a31; }
 .fun-entry { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 13px; }
-.fun-entry button { border-color: #68805b; color: #244a32; }
+.fun-entry .fun-button { min-height: 53px; min-width: 213px; padding: 0 19px; border-radius: 11px; background: #c5ed76; color: #19372b; font-size: 16px; font-weight: 600; }
+.fun-entry .fun-button:hover { background: #b5df66; }
+.fun-entry .fun-button:focus-visible { outline: 3px solid #234c42; outline-offset: 3px; }
+.fun-entry .fun-button:disabled { background: #e5ebdb; color: #71806e; opacity: 1; }
 .fun-entry p { margin: 0; flex: 1 1 220px; color: #536655; font-size: 13px; line-height: 1.5; }
 .fun-heading { color: #e8f2d9; font-size: 27px; line-height: 1.25; margin: 0 0 8px; }
 .fun-heading + .playful-panel { margin-top: 0; }

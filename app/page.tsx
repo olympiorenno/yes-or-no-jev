@@ -240,7 +240,7 @@ export default function Home() {
             <p className="search-note">{t.searchNote}</p>
             {error && <div className="error-message" role="alert"><CircleHelp size={18} /><span>{message(language, error.key, error.values)}</span></div>}
             <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{!key && demo.state === "available" ? t.demoAsk : t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
-            <div className="fun-entry"><Button type="button" variant="outline" onClick={startFun} disabled={busy || question.trim().length < 5}>{t.funOnlyStart}</Button><p>{t.funOnlyHint}</p></div>
+            <div className="fun-entry"><Button type="button" className="fun-button" onClick={startFun} disabled={busy || question.trim().length < 5}>{t.funOnlyStart}</Button><p>{t.funOnlyHint}</p></div>
           </form>
           <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
         </section>
