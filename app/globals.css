@@ -210,6 +210,8 @@ h1 { margin: 0 0 8px; font-size: clamp(30px, 3vw, 40px); font-weight: 580; line-
 .playful-options { display: flex; flex-wrap: wrap; gap: 9px; }
 .playful-options button { border: 1px solid #8ca37a; border-radius: 8px; padding: 10px 14px; color: #e9f6d6; background: #354f3e; font-size: 14px; cursor: pointer; }
 .playful-options button:hover, .playful-options button:focus-visible { background: #49684d; outline-color: #c5ed76; }
+.playful-panel p.playful-method { margin: 12px 0 0; color: #c2d5c3; font-size: 13px; line-height: 1.55; }
+.playful-method strong { color: #e9f6d6; font-weight: 600; }
 .playful-results { display: grid; gap: 8px; margin: 16px 0 9px; }
 .playful-results p { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
 .playful-results span { color: #c2d5c3; font-size: 13px; min-width: 125px; }

@@ -237,6 +237,8 @@ export default function Home() {
                     <button type="button" onClick={() => setDrawn(drawAnswer())}>{t.playfulDraw}</button>
                     <button type="button" onClick={() => { const date = new Date(); setNumerological({ ...numerology(submittedQuestion, date), date: date.toLocaleDateString(locale) }); }}>{t.playfulNumerology}</button>
                   </div>
+                  <p className="playful-method"><strong>{t.playfulDraw}:</strong> {t.playfulDrawInfo}</p>
+                  <p className="playful-method"><strong>{t.playfulNumerology}:</strong> {t.playfulNumerologyInfo}</p>
                   {(drawn || numerological) && <div className="playful-results" aria-live="polite">
                     {drawn && <p><span>{t.playfulDraw}</span><strong>{t[drawn]}</strong></p>}
                     {numerological && <p><span>{t.playfulNumerology}</span><strong>{t[numerological.answer]}</strong><small>{t.playfulNumber} {numerological.number} · {numerological.date}</small></p>}
@@ -285,7 +287,7 @@ export default function Home() {
       <DialogContent className="settings-dialog help-dialog" showCloseButton={false}>
         <button className="modal-close" onClick={() => setHelpOpen(false)} aria-label={t.close}><X size={20} /></button>
         <DialogHeader><DialogTitle>{t.help}</DialogTitle><DialogDescription>{t.helpDescription}</DialogDescription></DialogHeader>
-        <div className="help-content"><p><strong>{t.experimentTitle}.</strong> {t.experimentNotice}</p><p><strong>{t.helpQuestionTitle}</strong> {t.helpQuestion}</p><p><strong>{t.helpEvaluateTitle}</strong> {t.helpEvaluate}</p><p><strong>{t.helpAnswerTitle}</strong> {t.helpAnswer}</p><p>{t.helpBasis}</p><p>{t.helpCaution}</p><p>{t.helpLanguage}</p><p>{t.helpPdf}</p><p>{t.helpPrivacy}</p></div>
+        <div className="help-content"><p><strong>{t.experimentTitle}.</strong> {t.experimentNotice}</p><p><strong>{t.helpQuestionTitle}</strong> {t.helpQuestion}</p><p><strong>{t.helpEvaluateTitle}</strong> {t.helpEvaluate}</p><p><strong>{t.helpAnswerTitle}</strong> {t.helpAnswer}</p><p>{t.helpBasis}</p><p>{t.helpCaution}</p><p>{t.helpPlayful}</p><p>{t.helpLanguage}</p><p>{t.helpPdf}</p><p>{t.helpPrivacy}</p></div>
       </DialogContent>
     </Dialog>
   </div>;
