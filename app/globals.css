@@ -302,8 +302,15 @@ h1 { font-size: clamp(34px, 4vw, 52px); line-height: 1.1; letter-spacing: -2px; 
 .mode-card span { font-size: 13px; line-height: 1.35; }
 .mode-draw { background: #fff0cf; border-color: #ebd396; color: #654522; }
 .mode-number { background: #ece4ff; border-color: #d5c1f0; color: #4a3471; }
+.answer-modes .mode-ai { grid-column: 1 / -1; width: 100%; height: auto; min-width: 0; min-height: 122px; padding: 18px 20px; justify-content: center; white-space: normal; background: #26344c; border-color: #26344c; color: #fff; box-shadow: none; }
+.answer-modes .mode-ai strong { font-size: 19px; }
+.answer-modes .mode-ai span { color: #dbe5f5; font-size: 13px; }
+.answer-modes .mode-ai:hover { background: #18253a; color: #fff; }
+.answer-modes .mode-ai:disabled { background: #e1e5eb; border-color: #d5d9e0; color: #596477; opacity: 1; }
+.answer-modes .mode-ai:disabled span { color: #596477; }
 .mode-card:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 20px #35324a1a; }
 .mode-card:disabled { opacity: .58; }
+.answer-modes .mode-ai:disabled { opacity: 1; }
 .ai-divider { display: flex; align-items: center; gap: 13px; margin: 20px 0 11px; color: #545b6c; font-size: 14px; font-weight: 650; }
 .ai-divider::after { content: ''; height: 1px; background: #e2e4e9; flex: 1; }
 .context-controls { margin-top: 0; }

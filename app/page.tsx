@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -214,8 +214,10 @@ export default function Home() {
             <div className="answer-modes" aria-label={t.chooseMethod}>
               <button type="button" className="mode-card mode-draw" onClick={() => startFun("draw")} disabled={busy || question.trim().length < 5}><Dices size={25} aria-hidden="true" /><strong>{t.playfulDraw}</strong><span>{t.drawCardHint}</span></button>
               <button type="button" className="mode-card mode-number" onClick={() => startFun("numerology")} disabled={busy || question.trim().length < 5}><Sparkles size={25} aria-hidden="true" /><strong>{t.playfulNumerology}</strong><span>{t.numberCardHint}</span></button>
+              <Button type="submit" className="mode-card mode-ai" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={25} className="spin" /><strong>{phase ? t[phase] : t.querying}</strong></> : <><BrainCircuit size={25} aria-hidden="true" /><strong>{t.demoAsk}</strong><span>{t.aiCardHint}</span></>}</Button>
             </div>
-            <div className="ai-divider"><span>{t.aiOption}</span></div>
+            {busy && <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button>}
+            <div className="ai-divider"><span>{t.aiOptions}</span></div>
             <div className="context-controls">
               <button className="context-trigger" type="button" aria-expanded={contextOpen} aria-controls="extra-context" onClick={() => setContextOpen(!contextOpen)} disabled={busy}>{contextOpen ? <ChevronDown size={17} /> : <Plus size={17} />}{t.addContext}<span>{t.optional}</span></button>
               <Button type="button" variant="outline" className="attach-button" aria-describedby="pdf-sensitive-notice" disabled={busy || pdfBusy} onClick={() => pdfInput.current?.click()}><Paperclip size={16} />{pdf ? t.replacePdf : t.attachPdf}</Button>
@@ -240,8 +242,6 @@ export default function Home() {
             <div className="search-option"><div><Globe2 size={19} /><label htmlFor="references">{t.search}</label></div><Switch id="references" checked={search} onCheckedChange={setSearch} disabled={busy} aria-label={t.search} /></div>
             <p className="search-note">{t.searchNote}</p>
             {error && <div className="error-message" role="alert"><CircleHelp size={18} /><span>{message(language, error.key, error.values)}</span></div>}
-            <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{!key && demo.state === "available" ? t.demoAsk : t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
-            <p className="ai-hint">{t.aiCardHint}</p>
           </form>
           <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
         </section>
