@@ -307,8 +307,7 @@ export default function Home() {
       <footer className="page-footer">
         <address className="author-contact" aria-label={t.authorContact}>
           <div className="author-identity"><span>{t.createdBy}</span><strong>Olympio Rennó</strong></div>
-          <a className="author-social" href="https://www.linkedin.com/in/olympiorenno/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn · @olympiorenno">LinkedIn · @olympiorenno<ArrowUpRight size={14} aria-hidden="true" /></a>
-          <a className="author-social" href="https://github.com/olympiorenno" target="_blank" rel="noopener noreferrer" aria-label="GitHub · @olympiorenno">GitHub · @olympiorenno<ArrowUpRight size={14} aria-hidden="true" /></a>
+          <a className="author-social" href="https://olympiorenno.com.br" target="_blank" rel="noopener noreferrer">olympiorenno.com.br<ArrowUpRight size={14} aria-hidden="true" /></a>
         </address>
         <div className="footer-notes"><span>{t.footer}</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer">{t.about}<ArrowUpRight size={13} /></a></div>
       </footer>
