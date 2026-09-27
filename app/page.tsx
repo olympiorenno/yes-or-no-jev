@@ -38,6 +38,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<MessageKey | null>(null);
   const [result, setResult] = useState<Evaluation | null>(null);
+  const [funOnly, setFunOnly] = useState(false);
   const [drawn, setDrawn] = useState<PlayfulAnswer | null>(null);
   const [numerological, setNumerological] = useState<{ answer: PlayfulAnswer; number: number; date: string } | null>(null);
   const [usageRefresh, setUsageRefresh] = useState(0);
@@ -78,7 +79,7 @@ export default function Home() {
 
   function removePdf() {
     pdfActive.current?.abort(); pdfActive.current = null;
-    setPdf(null); setPdfBusy(false); setPdfError(null); setPdfProgress(null); setReadingName(""); setResult(null); setDrawn(null); setNumerological(null);
+    setPdf(null); setPdfBusy(false); setPdfError(null); setPdfProgress(null); setReadingName(""); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null);
     if (pdfInput.current) pdfInput.current.value = "";
   }
 
@@ -86,7 +87,7 @@ export default function Home() {
     if (!file || inFlight.current) return;
     pdfActive.current?.abort();
     const controller = new AbortController(); pdfActive.current = controller;
-    setPdf(null); setPdfError(null); setPdfBusy(true); setPdfProgress(null); setReadingName(file.name); setResult(null); setDrawn(null); setNumerological(null); setError(null); setContextOpen(true);
+    setPdf(null); setPdfError(null); setPdfBusy(true); setPdfProgress(null); setReadingName(file.name); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null); setError(null); setContextOpen(true);
     try {
       const document = await readPdf(file, controller.signal, (page, total) => { if (pdfActive.current === controller) setPdfProgress({ page, total }); });
       if (pdfActive.current === controller) setPdf(document);
@@ -115,7 +116,7 @@ export default function Home() {
     const usingDemo = !key;
     inFlight.current = true;
     const controller = new AbortController(); active.current = controller;
-    setBusy(true); setError(null); setResult(null); setDrawn(null); setNumerological(null); setCopied(false); setSubmittedQuestion(trimmed); setSubmittedPdf(pdf?.name || "");
+    setBusy(true); setError(null); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null); setCopied(false); setSubmittedQuestion(trimmed); setSubmittedPdf(pdf?.name || "");
     try {
       const answer = await evaluateQuestion({ question: trimmed, context: context.trim(), pdf, language, apiKey: key, useReferences: search, signal: controller.signal, onPhase: setPhase });
       setResult(answer); setKeyUsed(!usingDemo); setUsageRefresh(value => value + 1);
@@ -127,6 +128,16 @@ export default function Home() {
       setError(failure);
       if (failure.key === "invalidKey") { setKeyUsed(false); setKeyOpen(true); }
     } finally { inFlight.current = false; setBusy(false); setPhase(null); active.current = null; if (usingDemo) setDemoRefresh(value => value + 1); }
+  }
+
+  function startFun() {
+    if (inFlight.current || key || (demo.state !== "used" && demo.state !== "limit")) return;
+    if (!demoNoticeAccepted) { setDemoNoticeOpen(true); return; }
+    const trimmed = question.trim();
+    if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
+    if (trimmed.length > 1500) { setError(new AppError("questionLong")); return; }
+    setError(null); setResult(null); setFunOnly(true); setDrawn(null); setNumerological(null); setSubmittedQuestion(trimmed); setSubmittedPdf("");
+    requestAnimationFrame(() => resultHeading.current?.focus({ preventScroll: true }));
   }
 
   const askRef = useRef(ask); askRef.current = ask;
@@ -162,6 +173,22 @@ export default function Home() {
     catch { setError(new AppError("copyError")); }
   }
   function disconnect() { active.current?.abort(); setKey(""); setKeyDraft(""); setKeyUsed(false); setKeyOpen(false); }
+
+  const playfulPanel = (standalone: boolean) => <div className="playful-panel">
+    <h3>{standalone ? t.funOnlyChoose : t.playfulTitle}</h3>
+    <p>{standalone ? t.funOnlyDescription : t.playfulDescription}</p>
+    <div className="playful-options">
+      <button type="button" onClick={() => setDrawn(drawAnswer())}>{t.playfulDraw}</button>
+      <button type="button" onClick={() => { const date = new Date(); setNumerological({ ...numerology(submittedQuestion, date), date: date.toLocaleDateString(locale) }); }}>{t.playfulNumerology}</button>
+    </div>
+    <p className="playful-method"><strong>{t.playfulDraw}:</strong> {t.playfulDrawInfo}</p>
+    <p className="playful-method"><strong>{t.playfulNumerology}:</strong> {t.playfulNumerologyInfo}</p>
+    {(drawn || numerological) && <div className="playful-results" aria-live="polite">
+      {drawn && <p><span>{t.playfulDraw}</span><strong>{t[drawn]}</strong></p>}
+      {numerological && <p><span>{t.playfulNumerology}</span><strong>{t[numerological.answer]}</strong><small>{t.playfulNumber} {numerological.number} · {numerological.date}</small></p>}
+    </div>}
+    <small>{t.playfulDisclaimer}</small>
+  </div>;
 
   return <div className="app-shell">
     <header className="topbar">
@@ -213,13 +240,15 @@ export default function Home() {
             <p className="search-note">{t.searchNote}</p>
             {error && <div className="error-message" role="alert"><CircleHelp size={18} /><span>{message(language, error.key, error.values)}</span></div>}
             <div className="submit-row"><Button type="submit" className="ask-button" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={20} className="spin" />{phase ? t[phase] : t.querying}</> : <>{!key && demo.state === "available" ? t.demoAsk : t.ask}<ArrowUpRight size={21} /></>}</Button>{busy ? <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button> : <span className="keyboard-hint">⌘ / Ctrl + Enter</span>}</div>
+            {!key && (demo.state === "used" || demo.state === "limit") && <div className="fun-entry"><Button type="button" variant="outline" onClick={startFun} disabled={busy || question.trim().length < 5}>{t.funOnlyStart}</Button><p>{t.funOnlyHint}</p></div>}
           </form>
-          <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); setDrawn(null); setNumerological(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
+          <div className="examples"><p>{t.examples}</p>{examples[language].map(example => <button type="button" disabled={busy} key={example} onClick={() => { setQuestion(example); setError(null); setResult(null); setFunOnly(false); setDrawn(null); setNumerological(null); questionInput.current?.focus(); }}>{example}<ArrowUpRight size={16} /></button>)}</div>
         </section>
         <section className={`answer-panel ${result ? result.kind : "empty"}`} aria-labelledby="answer-heading" aria-busy={busy}>
-          <div className="answer-top"><span>{t.answer}</span><span className="answer-tag">{busy ? t.consulting : result ? "Jev" : t.waiting}</span></div>
+          <div className="answer-top"><span>{t.answer}</span><span className="answer-tag">{busy ? t.consulting : result ? "Jev" : funOnly ? t.playfulTitle : t.waiting}</span></div>
           <div className="answer-content" aria-live="polite" aria-atomic="true">
             {busy ? <div className="empty-answer"><div className="orbit loading-orbit"><LoaderCircle className="spin" size={38} /></div><h2 id="answer-heading">{phase ? t[phase] : t.analyzing}</h2><p>{t.pleaseWait}</p></div>
+              : funOnly ? <div className="result-content"><p className="asked-question">{submittedQuestion}</p><h2 id="answer-heading" ref={resultHeading} tabIndex={-1} className="fun-heading">{t.playfulTitle}</h2>{playfulPanel(true)}</div>
               : !result ? <div className="empty-answer"><div className="orbit"><span>?</span></div><h2 id="answer-heading">{t.emptyTitle}</h2><p>{t.emptyLine}<br />{t.emptyDescription}</p></div>
               : <div className="result-content">
                 <p className="asked-question">{submittedQuestion}</p>
@@ -230,25 +259,11 @@ export default function Home() {
                 {submittedPdf && <p className="reference-notice pdf-used"><FileText size={15} />{message(language, "attachedContext", { name: submittedPdf })}</p>}
                 {result.references.length > 0 && <div className="result-sources"><h3>{t.sources}</h3>{result.references.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}<ArrowUpRight size={14} /></a>)}</div>}
                 {result.referenceNotice && <p className="reference-notice">{result.referenceNoticeKey ? t[result.referenceNoticeKey] : result.referenceNotice}</p>}
-                <div className="playful-panel">
-                  <h3>{t.playfulTitle}</h3>
-                  <p>{t.playfulDescription}</p>
-                  <div className="playful-options">
-                    <button type="button" onClick={() => setDrawn(drawAnswer())}>{t.playfulDraw}</button>
-                    <button type="button" onClick={() => { const date = new Date(); setNumerological({ ...numerology(submittedQuestion, date), date: date.toLocaleDateString(locale) }); }}>{t.playfulNumerology}</button>
-                  </div>
-                  <p className="playful-method"><strong>{t.playfulDraw}:</strong> {t.playfulDrawInfo}</p>
-                  <p className="playful-method"><strong>{t.playfulNumerology}:</strong> {t.playfulNumerologyInfo}</p>
-                  {(drawn || numerological) && <div className="playful-results" aria-live="polite">
-                    {drawn && <p><span>{t.playfulDraw}</span><strong>{t[drawn]}</strong></p>}
-                    {numerological && <p><span>{t.playfulNumerology}</span><strong>{t[numerological.answer]}</strong><small>{t.playfulNumber} {numerological.number} · {numerological.date}</small></p>}
-                  </div>}
-                  <small>{t.playfulDisclaimer}</small>
-                </div>
+                {playfulPanel(false)}
                 <div className="result-actions"><button onClick={copyAnswer}><Copy size={16} />{copied ? t.copied : t.copy}</button><span>{result.model}</span></div>
               </div>}
           </div>
-          <div className="answer-footer"><ShieldCheck size={17} /><span>{t.estimateNote}</span></div>
+          <div className="answer-footer"><ShieldCheck size={17} /><span>{funOnly ? t.playfulDisclaimer : t.estimateNote}</span></div>
         </section>
       </div>
       <UsageCounter language={language} refreshToken={usageRefresh} />
