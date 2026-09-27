@@ -200,7 +200,6 @@ export default function Home() {
     </header>
     <main id="main" className="workspace">
       <div className="intro"><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
-      <aside className="experiment-notice" role="note" aria-labelledby="experiment-title"><TriangleAlert size={22} aria-hidden="true" /><div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div></aside>
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
@@ -212,6 +211,7 @@ export default function Home() {
               <button type="button" className="mode-card mode-number" onClick={() => startFun("numerology")} disabled={busy || question.trim().length < 5}><Sparkles size={25} aria-hidden="true" /><strong>{t.playfulNumerology}</strong><span>{t.numberCardHint}</span></button>
               <Button type="submit" className="mode-card mode-ai" disabled={busy || pdfBusy || !!pdfError || contextTooLong || question.trim().length < 5}>{busy ? <><LoaderCircle size={25} className="spin" /><strong>{phase ? t[phase] : t.querying}</strong></> : <><BrainCircuit size={25} aria-hidden="true" /><strong>{t.demoAsk}</strong><span>{t.aiCardHint}</span></>}</Button>
             </div>
+            <aside className="experiment-notice" role="note" aria-labelledby="experiment-title"><TriangleAlert size={19} aria-hidden="true" /><div><strong id="experiment-title">{t.experimentTitle}</strong><p>{t.experimentNotice}</p></div></aside>
             {busy && <Button type="button" variant="ghost" className="cancel-button" onClick={() => active.current?.abort()}>{t.cancel}</Button>}
             <div className="ai-divider"><span>{t.aiOptions}</span></div>
             <div className="context-controls">
