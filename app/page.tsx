@@ -66,6 +66,7 @@ export default function Home() {
   const pdfInput = useRef<HTMLInputElement>(null);
   const questionInput = useRef<HTMLTextAreaElement>(null);
   const speechActive = useRef<BrowserSpeechRecognition | null>(null);
+  const speechTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
@@ -76,7 +77,7 @@ export default function Home() {
     try { const saved = localStorage.getItem("jev-language"); if (saved === "pt" || saved === "en") setLanguage(saved); } catch { /* Device preferences are optional. */ }
     const browser = window as SpeechWindow;
     setSpeechSupported(!!(browser.SpeechRecognition || browser.webkitSpeechRecognition));
-    return () => { active.current?.abort(); pdfActive.current?.abort(); if (speechActive.current) { speechActive.current.onend = null; speechActive.current.abort(); } if (copyTimer.current) clearTimeout(copyTimer.current); };
+    return () => { active.current?.abort(); pdfActive.current?.abort(); if (speechTimeout.current) clearTimeout(speechTimeout.current); if (speechActive.current) { speechActive.current.onend = null; speechActive.current.onerror = null; speechActive.current.abort(); } if (copyTimer.current) clearTimeout(copyTimer.current); };
   }, []);
   useEffect(() => {
     document.documentElement.lang = localeFor(language);
@@ -85,9 +86,17 @@ export default function Home() {
 
   function changeLanguage(value: string) {
     if (value !== "pt" && value !== "en") return;
-    if (speechActive.current) { speechActive.current.onend = null; speechActive.current.abort(); speechActive.current = null; setListening(false); setSpeechNotice(null); }
+    cancelSpeech(); setSpeechNotice(null);
     setLanguage(value);
     try { localStorage.setItem("jev-language", value); } catch { /* Keep working without browser storage. */ }
+  }
+
+  function cancelSpeech() {
+    const recognition = speechActive.current;
+    speechActive.current = null;
+    if (speechTimeout.current) { clearTimeout(speechTimeout.current); speechTimeout.current = null; }
+    if (recognition) { recognition.onstart = null; recognition.onresult = null; recognition.onerror = null; recognition.onend = null; try { recognition.abort(); } catch { /* The browser may already have stopped. */ } }
+    setListening(false);
   }
 
   function toggleSpeech() {
@@ -101,14 +110,34 @@ export default function Home() {
     recognition.lang = locale;
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.onstart = () => { setListening(true); setSpeechNotice("speechListening"); };
+    recognition.onstart = () => { if (speechActive.current === recognition) { setListening(true); setSpeechNotice("speechListening"); } };
     recognition.onresult = event => {
       const transcript = event.results[0]?.[0]?.transcript?.trim();
-      if (transcript) { setQuestion(previous => `${previous.trim()}${previous.trim() ? " " : ""}${transcript}`.slice(0, 1500)); setError(null); setSpeechNotice("speechReview"); questionInput.current?.focus(); }
+      if (transcript && speechActive.current === recognition) { setQuestion(previous => `${previous.trim()}${previous.trim() ? " " : ""}${transcript}`.slice(0, 1500)); setError(null); setSpeechNotice("speechReview"); questionInput.current?.focus(); }
     };
-    recognition.onerror = event => { setSpeechNotice(event.error === "not-allowed" || event.error === "service-not-allowed" ? "speechDenied" : event.error === "no-speech" ? "speechNoAudio" : "speechFailed"); };
-    recognition.onend = () => { setListening(false); if (speechActive.current === recognition) speechActive.current = null; setSpeechNotice(current => current === "speechListening" ? "speechNoAudio" : current); };
-    try { recognition.start(); } catch { speechActive.current = null; setListening(false); setSpeechNotice("speechFailed"); }
+    recognition.onerror = event => {
+      if (speechActive.current !== recognition) return;
+      recognition.onstart = null; recognition.onresult = null; recognition.onend = null;
+      speechActive.current = null; setListening(false);
+      if (speechTimeout.current) { clearTimeout(speechTimeout.current); speechTimeout.current = null; }
+      setSpeechNotice(event.error === "not-allowed" || event.error === "service-not-allowed" ? "speechDenied" : event.error === "no-speech" ? "speechNoAudio" : "speechFailed");
+      try { recognition.abort(); } catch { /* The browser may already have stopped. */ }
+    };
+    recognition.onend = () => {
+      if (speechActive.current !== recognition) return;
+      speechActive.current = null; setListening(false);
+      if (speechTimeout.current) { clearTimeout(speechTimeout.current); speechTimeout.current = null; }
+      setSpeechNotice(current => current === "speechListening" ? "speechNoAudio" : current);
+    };
+    try {
+      recognition.start();
+      if (speechActive.current === recognition) speechTimeout.current = setTimeout(() => {
+        if (speechActive.current !== recognition) return;
+        recognition.onend = null; recognition.onerror = null;
+        speechActive.current = null; speechTimeout.current = null; setListening(false); setSpeechNotice("speechFailed");
+        try { recognition.abort(); } catch { /* The browser may already have stopped. */ }
+      }, 30000);
+    } catch { speechActive.current = null; setListening(false); setSpeechNotice("speechFailed"); }
   }
 
   function removePdf() {
@@ -133,7 +162,8 @@ export default function Home() {
   }
 
   async function ask(value = question) {
-    if (speechActive.current) return;
+    if (listening) return;
+    if (speechActive.current) cancelSpeech();
     const trimmed = value.trim();
     if (inFlight.current) throw new AppError("inFlight");
     if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
@@ -165,7 +195,8 @@ export default function Home() {
   }
 
   function startFun(mode: "draw" | "numerology") {
-    if (inFlight.current || speechActive.current) return;
+    if (inFlight.current || listening) return;
+    if (speechActive.current) cancelSpeech();
     const trimmed = question.trim();
     if (trimmed.length < 5) { setError(new AppError("questionShort")); questionInput.current?.focus(); return; }
     if (trimmed.length > 1500) { setError(new AppError("questionLong")); return; }
@@ -242,7 +273,7 @@ export default function Home() {
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
             <div className="panel-title"><label id="question-label" htmlFor="question">{t.question}</label></div>
-            <div className="question-field"><Textarea ref={questionInput} id="question" className="question-input" value={question} maxLength={1500} disabled={busy} onChange={e => { setQuestion(e.target.value); setError(null); }} placeholder={t.placeholder} aria-describedby="question-hint speech-hint" onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !inFlight.current && !speechActive.current) { e.preventDefault(); void ask(); } }} /><Button type="button" className={`speech-button ${listening ? "is-listening" : ""}`} variant="outline" onClick={toggleSpeech} disabled={busy || !speechSupported} aria-label={listening ? t.speechStop : speechSupported ? t.speechStart : t.speechUnavailable} aria-pressed={listening} title={speechSupported ? (listening ? t.speechStop : t.speechStart) : t.speechUnavailable}>{listening ? <MicOff size={20} /> : <Mic size={20} />}</Button></div>
+            <div className="question-field"><Textarea ref={questionInput} id="question" className="question-input" value={question} maxLength={1500} disabled={busy} onChange={e => { setQuestion(e.target.value); setError(null); }} placeholder={t.placeholder} aria-describedby="question-hint speech-hint" onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !inFlight.current && !listening) { e.preventDefault(); void ask(); } }} /><Button type="button" className={`speech-button ${listening ? "is-listening" : ""}`} variant="outline" onClick={toggleSpeech} disabled={busy || !speechSupported} aria-label={listening ? t.speechStop : speechSupported ? t.speechStart : t.speechUnavailable} aria-pressed={listening} title={speechSupported ? (listening ? t.speechStop : t.speechStart) : t.speechUnavailable}>{listening ? <MicOff size={20} /> : <Mic size={20} />}</Button></div>
             <p id="speech-hint" className="speech-hint" role="status">{speechNotice ? t[speechNotice] : speechSupported ? t.speechPrivacy : t.speechUnavailable}</p>
             <div className="under-input"><span id="question-hint">{t.oneQuestion}</span><span>{number(question.length)} / {number(1500)}</span></div>
             <div className="answer-modes" aria-label={t.chooseMethod}>
