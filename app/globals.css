@@ -289,6 +289,9 @@ h1 { font-size: clamp(34px, 4vw, 52px); line-height: 1.1; letter-spacing: -2px; 
 .question-panel { padding: 27px; border-color: #e1e1e4; box-shadow: 0 12px 34px #252d4210; }
 .panel-title { margin-bottom: 11px; }
 .panel-title label { font-size: 18px; }
+.panel-title .result-location { display: flex; align-items: center; gap: 8px; margin: 0; color: #53617b; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.panel-title .result-location svg { flex: none; color: #7557b4; }
+.panel-title .result-location-mobile { display: none; }
 .question-input { min-height: 112px; background: #fafafd; border-color: #d9dbe5; }
 .question-field { position: relative; }
 .question-field .question-input { padding-right: 76px; }
@@ -342,5 +345,6 @@ h1 { font-size: clamp(34px, 4vw, 52px); line-height: 1.1; letter-spacing: -2px; 
 .experiment-notice p { display: inline; font-size: 13px; line-height: 1.5; margin-left: 7px; }
 .usage-counter { border-color: #e1e1e4; }
 @media (max-width: 760px) { .topbar { min-height: 76px; height: auto; } .workspace { padding-top: 25px; } h1 { font-size: 37px; letter-spacing: -1.4px; } .intro { grid-template-columns: minmax(0, 1fr) 132px; min-height: 0; column-gap: 8px; } .intro-art { width: 132px; height: 132px; grid-row: 1; } .intro-subtitle { grid-column: 1 / -1; grid-row: 2; margin-top: 10px!important; } .intro > p:last-child { font-size: 16px; } .workspace-grid { grid-template-columns: 1fr; } .answer-panel { min-height: 390px; } .question-panel { padding: 22px; } }
+@media (max-width: 760px) { .panel-title .result-location-desktop { display: none; } .panel-title .result-location-mobile { display: flex; } }
 @media (max-width: 430px) { .intro { grid-template-columns: minmax(0, 1fr) 104px; } .intro-art { width: 104px; height: 104px; } h1 { font-size: 32px; } }
 @media (max-width: 430px) { .answer-modes { gap: 8px; } .mode-card { padding: 13px; min-height: 140px; } .mode-card strong { font-size: 15px; } .mode-card span { font-size: 12px; } .question-panel { padding: 18px; } .intro { margin-bottom: 20px; } }

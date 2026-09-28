@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles, BrainCircuit, Mic, MicOff } from "lucide-react";
+import { ArrowUpRight, ArrowDown, ArrowRight, Check, ChevronDown, CircleHelp, Copy, FileText, Globe2, KeyRound, Languages, LoaderCircle, Paperclip, Plus, ShieldCheck, TriangleAlert, Unplug, X, Dices, Sparkles, BrainCircuit, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -272,7 +272,7 @@ export default function Home() {
       <div className="workspace-grid">
         <section className="question-panel" aria-labelledby="question-label">
           <form onSubmit={e => { e.preventDefault(); void ask(); }}>
-            <div className="panel-title"><label id="question-label" htmlFor="question">{t.question}</label></div>
+            <div className="panel-title"><label id="question-label" htmlFor="question" className="sr-only">{t.question}</label><p className="result-location result-location-desktop">{t.resultBeside}<ArrowRight size={19} aria-hidden="true" /></p><p className="result-location result-location-mobile">{t.resultBelow}<ArrowDown size={19} aria-hidden="true" /></p></div>
             <div className="question-field"><Textarea ref={questionInput} id="question" className="question-input" value={question} maxLength={1500} disabled={busy} onChange={e => { setQuestion(e.target.value); setError(null); }} placeholder={t.placeholder} aria-describedby="question-hint speech-hint" onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !inFlight.current && !listening) { e.preventDefault(); void ask(); } }} /><Button type="button" className={`speech-button ${listening ? "is-listening" : ""}`} variant="outline" onClick={toggleSpeech} disabled={busy || !speechSupported} aria-label={listening ? t.speechStop : speechSupported ? t.speechStart : t.speechUnavailable} aria-pressed={listening} title={speechSupported ? (listening ? t.speechStop : t.speechStart) : t.speechUnavailable}>{listening ? <MicOff size={20} /> : <Mic size={20} />}</Button></div>
             <p id="speech-hint" className="speech-hint" role="status">{speechNotice ? t[speechNotice] : speechSupported ? t.speechPrivacy : t.speechUnavailable}</p>
             <div className="under-input"><span id="question-hint">{t.oneQuestion}</span><span>{number(question.length)} / {number(1500)}</span></div>
